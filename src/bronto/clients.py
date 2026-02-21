@@ -1,14 +1,14 @@
 import urllib.request
-import logging
 import os
 import json
 import csv
-from typing import List, Dict, Optional, Annotated
+from typing import List, Dict, Optional
 from urllib.error import HTTPError
 
+from logger import module_logger
 from models import DatasetKey, LogEvent
 
-logger = logging.getLogger()
+logger = module_logger(__name__)
 
 
 class FailedBrontoRequestException(Exception):
@@ -260,7 +260,7 @@ class BrontoClient:
                         keys_and_values[key].extend(body[log_id][key].get("values", {}).keys())
                     else:
                         keys_and_values[key] = body[log_id][key].get("values", {}).keys()
-                logging.info("keys_and_values=%s", keys_and_values)
+                logger.info("keys_and_values=%s", keys_and_values)
                 return {key: list(set(keys_and_values[key])) for key in keys_and_values}
         except (FailedBrontoRequestException, BrontoResponseDecodingException) as e:
             raise e
@@ -287,7 +287,7 @@ class BrontoClient:
             raise Exception("Cannot interact with Bronto. Please check endpoint configuration.")
 
     def get_all_datasets_top_keys(self) -> Dict[str, List[str]]:
-        url_path = f"top-keys"
+        url_path = "top-keys"
         request = urllib.request.Request(
             os.path.join(self.api_endpoint, url_path), headers=self.headers
         )
@@ -312,7 +312,7 @@ class BrontoClient:
                     if log_id not in log_ids_and_keys:
                         log_ids_and_keys[log_id] = []
                     log_ids_and_keys[log_id].extend(body[log_id].keys())
-                logging.info("log_ids_and_keys=%s", log_ids_and_keys)
+                logger.info("log_ids_and_keys=%s", log_ids_and_keys)
                 return log_ids_and_keys
         except (FailedBrontoRequestException, BrontoResponseDecodingException) as e:
             raise e
@@ -339,7 +339,7 @@ class BrontoClient:
             raise Exception("Cannot interact with Bronto. Please check endpoint configuration.")
 
     def get_all_datasets_top_keys_and_values(self) -> Dict[str, Dict[str, List[str]]]:
-        url_path = f"top-keys"
+        url_path = "top-keys"
         request = urllib.request.Request(
             os.path.join(self.api_endpoint, url_path), headers=self.headers
         )
@@ -369,7 +369,7 @@ class BrontoClient:
                             for key in body[log_id]
                         }
                     )
-                logging.info("log_ids_and_keys_and_values=%s", log_ids_and_keys_and_values)
+                logger.info("log_ids_and_keys_and_values=%s", log_ids_and_keys_and_values)
                 return log_ids_and_keys_and_values
         except (FailedBrontoRequestException, BrontoResponseDecodingException) as e:
             raise e
@@ -468,10 +468,10 @@ class BrontoClient:
             return statement_ids
 
         except FileNotFoundError:
-            print(f"Error: CSV file not found at {csv_file_path}")
+            logger.error("Statement IDs CSV file not found: %s", csv_file_path)
             return None
-        except Exception as e:
-            print(f"Error reading CSV file: {e}")
+        except Exception:
+            logger.exception("Error reading statement IDs CSV: %s", csv_file_path)
             return None
 
 
@@ -503,7 +503,7 @@ class BrontoClient:
 
             stmt_endpoint = self.api_endpoint + ('' if self.api_endpoint.endswith('/') else '/') + 'statements'
 
-            print(f"Posting to: {stmt_endpoint}")
+            logger.info("Posting statement IDs to: %s", stmt_endpoint)
 
             # Encode the JSON payload as bytes
             data = json_payload.encode('utf-8')
@@ -517,35 +517,42 @@ class BrontoClient:
                 response_headers = dict(response.headers)
                 response_data = response.read().decode('utf-8')
 
-            print(f"Response Status Code: {status_code}")
-            print(f"Response Headers: {response_headers}")
+            logger.info("Statement IDs POST status: %s", status_code)
+            logger.debug("Statement IDs POST headers: %s", response_headers)
 
             if status_code == 200 or status_code == 201:
-                print("✅ Successfully posted statement IDs to API")
+                logger.info("Successfully posted statement IDs to API")
                 try:
                     response_json = json.loads(response_data)
-                    print(f"Response: {json.dumps(response_json, indent=2)}")
+                    logger.debug(
+                        "Statement IDs POST response: %s",
+                        json.dumps(response_json, indent=2),
+                    )
                 except json.JSONDecodeError:
-                    print(f"Response Text: {response_data}")
+                    logger.debug("Statement IDs POST response text: %s", response_data)
                 return True
             else:
-                print(f"❌ Failed to post statement IDs. Status: {status_code}")
-                print(f"Response: {response_data}")
+                logger.error("Failed to post statement IDs. status=%s", status_code)
+                logger.error("Statement IDs POST response: %s", response_data)
                 return False
 
         except urllib.error.HTTPError as e:
-            print(f"❌ HTTP Error {e.code}: {e.reason}")
+            logger.error(
+                "HTTP error while posting statement IDs. code=%s reason=%s",
+                e.code,
+                e.reason,
+            )
             try:
                 error_response = e.read().decode('utf-8')
-                print(f"Error Response: {error_response}")
-            except:
+                logger.error("Statement IDs POST error response: %s", error_response)
+            except Exception:
                 pass
             return False
         except urllib.error.URLError as e:
-            print(f"❌ URL Error: {e.reason}")
+            logger.error("URL error while posting statement IDs: %s", e.reason)
             return False
-        except Exception as e:
-            print(f"❌ Unexpected error: {e}")
+        except Exception:
+            logger.exception("Unexpected error while posting statement IDs")
             return False
 
     def deploy_statements(self, csv_file_path, project_id, version, repo_url) -> Dict:

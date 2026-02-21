@@ -1,5 +1,4 @@
 import time
-import logging
 import uuid
 
 from pydantic import Field, BeforeValidator
@@ -7,11 +6,12 @@ from typing_extensions import Annotated
 from datetime import datetime, timezone
 from typing import List, Optional, Dict
 from agents import BrontoAgentRegistry, create_default_agent_registry
+from logger import module_logger
 from models import Dataset, LogEvent, Datapoint, Timeseries
 
 from clients import BrontoClient
 
-logger = logging.getLogger()
+logger = module_logger(__name__)
 
 
 class BrontoTools:

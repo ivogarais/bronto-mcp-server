@@ -1,20 +1,15 @@
-import logging
-import sys
-
 from mcp.server.fastmcp import FastMCP
 from config import Config
 from clients import BrontoClient
 from agents import create_default_agent_registry
+from logger import bootstrap_logging, module_logger
 from tools import BrontoTools
 
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-logger.addHandler(handler)
+logger = module_logger(__name__)
 
 
 if __name__ == "__main__":
+    bootstrap_logging()
     logger.info("Starting Bronto MCP server")
     agent_registry = create_default_agent_registry()
     mcp = FastMCP(
