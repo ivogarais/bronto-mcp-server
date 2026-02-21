@@ -76,7 +76,7 @@ class DatasetsToolHandlers:
             return []
         return result
 
-    def get_dataset_keys(
+    def get_keys(
         self,
         log_id: Annotated[
             str,

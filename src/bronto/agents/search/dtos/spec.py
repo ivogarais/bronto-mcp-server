@@ -9,7 +9,7 @@ from ...base import (
     ToolInputSpec,
     ToolOutputSpec,
 )
-from ..enums import SearchToolHandler, SearchToolName
+from ..enums import SearchToolName
 
 
 class SearchAgentSpec(BaseModel):
@@ -20,7 +20,7 @@ class SearchAgentSpec(BaseModel):
         default_factory=lambda: [
             AgentToolSpec(
                 name=SearchToolName.SEARCH_LOGS.value,
-                handler=SearchToolHandler.SEARCH_LOGS.value,
+                handler=SearchToolName.SEARCH_LOGS.value,
                 kind=AgentKind.TOOL,
                 description=(
                     "Search log events from selected dataset IDs and time range, with optional SQL-like filter."
@@ -52,7 +52,7 @@ class SearchAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=SearchToolName.COMPUTE_METRICS.value,
-                handler=SearchToolHandler.COMPUTE_METRICS.value,
+                handler=SearchToolName.COMPUTE_METRICS.value,
                 kind=AgentKind.TOOL,
                 description=(
                     "Compute metrics such as AVG, MIN, MAX, COUNT, SUM over log data and group keys."
@@ -90,7 +90,7 @@ class SearchAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=SearchToolName.GET_TIMESTAMP_AS_UNIX_EPOCH.value,
-                handler=SearchToolHandler.GET_TIMESTAMP_AS_UNIX_EPOCH.value,
+                handler=SearchToolName.GET_TIMESTAMP_AS_UNIX_EPOCH.value,
                 kind=AgentKind.TOOL,
                 description="Convert a timestamp in YYYY-MM-DD HH:mm:ss to unix epoch milliseconds.",
                 execution=ToolExecutionSpec(
@@ -101,7 +101,7 @@ class SearchAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=SearchToolName.GET_CURRENT_TIME.value,
-                handler=SearchToolHandler.GET_CURRENT_TIME.value,
+                handler=SearchToolName.GET_CURRENT_TIME.value,
                 kind=AgentKind.TOOL,
                 description="Return current time in YYYY-MM-DD HH:mm:ss.",
                 execution=ToolExecutionSpec(
@@ -111,8 +111,8 @@ class SearchAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=SearchToolName.SEARCH_LOGS_PLAYBOOK.value,
-                handler=SearchToolHandler.SEARCH_LOGS_PLAYBOOK.value,
-                kind=AgentKind.PROMPT,
+                handler=SearchToolName.SEARCH_LOGS_PLAYBOOK.value,
+                kind=AgentKind.TOOL,
                 description="Playbook for safe raw log retrieval workflow.",
                 execution=ToolExecutionSpec(
                     output=ToolOutputSpec(value_type=str),
@@ -121,8 +121,8 @@ class SearchAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=SearchToolName.COMPUTE_METRICS_PLAYBOOK.value,
-                handler=SearchToolHandler.COMPUTE_METRICS_PLAYBOOK.value,
-                kind=AgentKind.PROMPT,
+                handler=SearchToolName.COMPUTE_METRICS_PLAYBOOK.value,
+                kind=AgentKind.TOOL,
                 description="Playbook for robust metric computation workflow.",
                 execution=ToolExecutionSpec(
                     output=ToolOutputSpec(value_type=str),

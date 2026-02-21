@@ -9,7 +9,7 @@ from ...base import (
     ToolInputSpec,
     ToolOutputSpec,
 )
-from ..enums import DatasetsToolHandler, DatasetsToolName
+from ..enums import DatasetsToolName
 
 
 class DatasetsAgentSpec(BaseModel):
@@ -20,7 +20,7 @@ class DatasetsAgentSpec(BaseModel):
         default_factory=lambda: [
             AgentToolSpec(
                 name=DatasetsToolName.GET_DATASETS.value,
-                handler=DatasetsToolHandler.GET_DATASETS.value,
+                handler=DatasetsToolName.GET_DATASETS.value,
                 kind=AgentKind.TOOL,
                 description="Fetch all available dataset details including log IDs and tags.",
                 execution=ToolExecutionSpec(
@@ -30,7 +30,7 @@ class DatasetsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=DatasetsToolName.GET_DATASETS_BY_NAME.value,
-                handler=DatasetsToolHandler.GET_DATASETS_BY_NAME.value,
+                handler=DatasetsToolName.GET_DATASETS_BY_NAME.value,
                 kind=AgentKind.TOOL,
                 description="Fetch datasets matching an exact dataset name and collection name.",
                 execution=ToolExecutionSpec(
@@ -44,7 +44,7 @@ class DatasetsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=DatasetsToolName.GET_KEYS.value,
-                handler=DatasetsToolHandler.GET_KEYS.value,
+                handler=DatasetsToolName.GET_KEYS.value,
                 kind=AgentKind.TOOL,
                 description="List all keys present in a dataset identified by log ID.",
                 execution=ToolExecutionSpec(
@@ -55,7 +55,7 @@ class DatasetsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=DatasetsToolName.GET_ALL_DATASETS_KEYS.value,
-                handler=DatasetsToolHandler.GET_ALL_DATASETS_KEYS.value,
+                handler=DatasetsToolName.GET_ALL_DATASETS_KEYS.value,
                 kind=AgentKind.TOOL,
                 description="List keys for every dataset, grouped by dataset ID.",
                 execution=ToolExecutionSpec(
@@ -65,7 +65,7 @@ class DatasetsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=DatasetsToolName.GET_KEY_VALUES.value,
-                handler=DatasetsToolHandler.GET_KEY_VALUES.value,
+                handler=DatasetsToolName.GET_KEY_VALUES.value,
                 kind=AgentKind.TOOL,
                 description="Fetch sample values for a key in a specific dataset.",
                 execution=ToolExecutionSpec(
@@ -79,8 +79,8 @@ class DatasetsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=DatasetsToolName.DATASETS_PLAYBOOK.value,
-                handler=DatasetsToolHandler.DATASETS_PLAYBOOK.value,
-                kind=AgentKind.PROMPT,
+                handler=DatasetsToolName.DATASETS_PLAYBOOK.value,
+                kind=AgentKind.TOOL,
                 description="Playbook for dataset discovery and key validation.",
                 execution=ToolExecutionSpec(
                     output=ToolOutputSpec(value_type=str),

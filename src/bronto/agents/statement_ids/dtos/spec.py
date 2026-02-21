@@ -7,7 +7,7 @@ from ...base import (
     ToolInputSpec,
     ToolOutputSpec,
 )
-from ..enums import StatementIdsToolHandler, StatementIdsToolName
+from ..enums import StatementIdsToolName
 
 
 class StatementIdsAgentSpec(BaseModel):
@@ -18,7 +18,7 @@ class StatementIdsAgentSpec(BaseModel):
         default_factory=lambda: [
             AgentToolSpec(
                 name=StatementIdsToolName.CREATE_STMT_ID.value,
-                handler=StatementIdsToolHandler.CREATE_STMT_ID.value,
+                handler=StatementIdsToolName.CREATE_STMT_ID.value,
                 kind=AgentKind.TOOL,
                 description="Generate a random 16-character statement ID.",
                 execution=ToolExecutionSpec(
@@ -28,7 +28,7 @@ class StatementIdsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=StatementIdsToolName.DEPLOY_STATEMENTS.value,
-                handler=StatementIdsToolHandler.DEPLOY_STATEMENTS.value,
+                handler=StatementIdsToolName.DEPLOY_STATEMENTS.value,
                 kind=AgentKind.TOOL,
                 description="Deploy a CSV mapping of statement IDs and log statements to Bronto.",
                 execution=ToolExecutionSpec(
@@ -44,8 +44,8 @@ class StatementIdsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=StatementIdsToolName.STATEMENT_IDS_PLAYBOOK.value,
-                handler=StatementIdsToolHandler.STATEMENT_IDS_PLAYBOOK.value,
-                kind=AgentKind.PROMPT,
+                handler=StatementIdsToolName.STATEMENT_IDS_PLAYBOOK.value,
+                kind=AgentKind.TOOL,
                 description="Playbook for statement ID workflow, from injection to deployment.",
                 execution=ToolExecutionSpec(
                     output=ToolOutputSpec(value_type=str),
@@ -54,8 +54,8 @@ class StatementIdsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=StatementIdsToolName.INJECT_STMT_IDS.value,
-                handler=StatementIdsToolHandler.INJECT_STMT_IDS.value,
-                kind=AgentKind.PROMPT,
+                handler=StatementIdsToolName.INJECT_STMT_IDS.value,
+                kind=AgentKind.TOOL,
                 description="Playbook template explaining how to inject statement IDs in source files.",
                 execution=ToolExecutionSpec(
                     inputs=[ToolInputSpec(name="src_path", value_type=str)],
@@ -65,8 +65,8 @@ class StatementIdsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=StatementIdsToolName.EXTRACT_STMT_IDS.value,
-                handler=StatementIdsToolHandler.EXTRACT_STMT_IDS.value,
-                kind=AgentKind.PROMPT,
+                handler=StatementIdsToolName.EXTRACT_STMT_IDS.value,
+                kind=AgentKind.TOOL,
                 description="Playbook template explaining how to extract statement IDs and write statementIds.csv.",
                 execution=ToolExecutionSpec(
                     inputs=[
@@ -82,8 +82,8 @@ class StatementIdsAgentSpec(BaseModel):
             ),
             AgentToolSpec(
                 name=StatementIdsToolName.UPDATE_STMT_IDS.value,
-                handler=StatementIdsToolHandler.UPDATE_STMT_IDS.value,
-                kind=AgentKind.PROMPT,
+                handler=StatementIdsToolName.UPDATE_STMT_IDS.value,
+                kind=AgentKind.TOOL,
                 description="Playbook template for updating injected IDs and refreshing statementIds.csv.",
                 execution=ToolExecutionSpec(
                     inputs=[

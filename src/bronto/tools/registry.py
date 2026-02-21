@@ -1,6 +1,3 @@
-from bronto.agents import AgentKind
-
-
 class MCPToolRegistrar:
     """Registers handlers defined on BrontoTools with MCP based on agent specs."""
 
@@ -9,9 +6,4 @@ class MCPToolRegistrar:
             handler = getattr(self, tool_spec.handler, None)
             if handler is None:
                 raise AttributeError(f"Unknown tool handler: {tool_spec.handler}")
-            if tool_spec.kind is AgentKind.PROMPT:
-                mcp.prompt(name=tool_spec.name)(handler)
-            else:
-                mcp.tool(name=tool_spec.name, description=tool_spec.description)(
-                    handler
-                )
+            mcp.tool(name=tool_spec.name, description=tool_spec.description)(handler)

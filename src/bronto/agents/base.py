@@ -6,7 +6,6 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class AgentKind(str, Enum):
     TOOL = "tool"
-    PROMPT = "prompt"
 
 
 class ToolInputSpec(BaseModel):
@@ -51,7 +50,7 @@ class ToolExecutionSpec(BaseModel):
 
 
 class AgentToolSpec(BaseModel):
-    name: str = Field(description="Tool or prompt name exposed to MCP clients")
+    name: str = Field(description="Tool name exposed to MCP clients")
     handler: str = Field(description="Method name on BrontoTools that implements this spec")
     kind: AgentKind = Field(default=AgentKind.TOOL)
     description: str = Field(description="LLM-facing tool description")

@@ -86,7 +86,7 @@ def test_get_datasets_by_name_no_match(bronto_tools, mock_bronto_client):
     assert len(datasets) == 0
 
 
-def test_get_dataset_keys(monkeypatch):
+def test_get_keys(monkeypatch):
     bronto_client = BrontoClient("some_api_key", "some_endpoint")
     monkeypatch.setattr(
         BrontoClient,
@@ -94,7 +94,7 @@ def test_get_dataset_keys(monkeypatch):
         lambda _, __: {"key1": ["value1", "1"], "key2": ["value2", "2"]},
     )
     bronto_tools = BrontoTools(bronto_client, build_agent_registry())
-    keys = bronto_tools.get_dataset_keys("test_log_id")
+    keys = bronto_tools.get_keys("test_log_id")
     assert len(keys) == 2
     assert "key1" in keys
     assert "key2" in keys
