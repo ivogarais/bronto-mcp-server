@@ -1,12 +1,12 @@
 import time
 import logging
 import uuid
-from pydoc import describe
 
 from pydantic import Field, BeforeValidator
 from typing_extensions import Annotated
 from datetime import datetime, timezone
 from typing import List, Optional, Dict
+from agents import BrontoAgentRegistry, create_default_agent_registry
 from models import Dataset, LogEvent, Datapoint, Timeseries
 
 from clients import BrontoClient
@@ -17,104 +17,23 @@ logger = logging.getLogger()
 class BrontoTools:
     """Tools to interact with log data stored in Bronto"""
 
-    def __init__(self, bronto_client: BrontoClient):
+    def __init__(
+        self,
+        bronto_client: BrontoClient,
+        agent_registry: Optional[BrontoAgentRegistry] = None,
+    ):
         self.bronto_client = bronto_client
+        self.agent_registry = agent_registry or create_default_agent_registry()
 
     def register(self, mcp):
-        mcp.tool(
-            name="search_logs",
-            description="""Searches log data. This tool returns a list of log events and their attributes
-                The prompt should be a question or statement that you want for log data to be searched,
-                such as "Can you please search some log data from datasets related to the Bronto ingestion system?".
-                Only the @raw field should be presented to the user. No summary or other details should be presented to them.
-                """,
-        )(self.search_logs)
-
-        mcp.tool(
-            name="compute_metrics",
-            description="""Computes metric data from log data. This tool returns a list of data points for each key in the group_by_keys
-                list. Each list represents the value of the computed metrics for a subset of the provided time range.
-            
-                The prompt should be a question or statement that you want for a metric to be computed. For instance for web access
-                or CDN logs, the question could look like the following: "Can you please provide the sum of the average response
-                time per path for the last hour?". The answer would then return the AVG(response_time) metric, grouped by URL path,
-                and split into a list of data points, one per every 5 minutes of the provided time range.
-                """,
-        )(self.compute_metrics)
-
-        mcp.tool(
-            name="get_timestamp_as_unix_epoch",
-            description="""Provides a unix timestamp (in milliseconds) since epoch representation of the input time. This tool
-                takes 1 string as parameters, representing a time in the following format '%Y-%m-%d %H:%M:%S'. For instance with
-                input_time='2025-05-01 00:00:00' then this tool returns 1746054000000. And with input_time='2025-05-01 01:00:00',
-                then this tool returns 1746057600000
-                """,
-        )(self.get_timestamp_as_unix_epoch)
-
-        mcp.tool(name="get_datasets", description="Fetches all dataset details")(self.get_datasets)
-
-        mcp.tool(
-            name="get_datasets_by_name",
-            description="""Fetches details about a Bronto dataset. A dataset is uniquely identify by its name and its 
-                collection name. In other words, several datasets with the same name can be associated with different collections. 
-                However only one dataset with a given name can be associated to a given collection.
-                """,
-        )(self.get_datasets_by_name)
-
-        mcp.tool(
-            name="get_keys",
-            description="""Fetches all keys present in a dataset, which is represented by a log ID.
-                This tool takes a log ID as parameter. A log ID is a string representing a UUID. A log ID maps to a dataset and
-                collection name. So given a dataset and collection name, it is possible to retrieve its log ID by using another tool
-                which provides details on datasets.
-                This tool returns a list strings. Each string provides the name of a key present in the provided dataset
-                """,
-        )(self.get_dataset_keys)
-
-        mcp.tool(
-            name="get_all_datasets_keys",
-            description="""Fetches all keys present in all datasets.
-                This tool returns a list of strings. Each string provides the name of a key present in the provided 
-                dataset. This tool is useful in cases such as:
-                - to select datasets the contain certain keys
-                - to identify the exact key name based on some description 
-                """,
-        )(self.get_all_datasets_keys)
-
-        mcp.tool(
-            name="get_key_values",
-            description="""Fetches the values of the provided key and dataset ID.
-                This tool returns a list of strings. Each string provides the value of the key provided as input, for 
-                the dataset provided as input.""",
-        )(self.get_key_values)
-
-        mcp.tool(
-            name="get_current_time",
-            description="This tool provides the current time in the YYYY-MM-DD HH:mm:ss format",
-        )(self.get_current_time)
-
-        mcp.tool(
-            name='create_stmt_id',
-            description='This tool provides a randomly generate statement ID'
-        )(self.create_stmt_id)
-
-        mcp.tool(
-            name='deploy_statements',
-            description='This tool sends to Bronto the list of statements in this projects with their corresponding '
-                        'statement IDs'
-        )(self.deploy_statements)
-
-        mcp.prompt(
-            name='inject_stmt_ids'
-        )(self.inject_stmt_ids)
-
-        mcp.prompt(
-            name='extract_stmt_ids'
-        )(self.extract_stmt_ids)
-
-        mcp.prompt(
-            name='update_stmt_ids'
-        )(self.update_stmt_ids)
+        for tool_spec in self.agent_registry.iter_tool_specs():
+            handler = getattr(self, tool_spec.handler, None)
+            if handler is None:
+                raise AttributeError(f"Unknown tool handler: {tool_spec.handler}")
+            if tool_spec.kind == "prompt":
+                mcp.prompt(name=tool_spec.name)(handler)
+            else:
+                mcp.tool(name=tool_spec.name)(handler)
 
     def search_logs(
         self,
@@ -171,7 +90,11 @@ class BrontoTools:
             log_ids,
         )
         log_events = self.bronto_client.search(
-            timerange_start, timerange_end, log_ids, search_filter, _select=["*", "@raw"]
+            timerange_start,
+            timerange_end,
+            log_ids,
+            search_filter,
+            _select=["*", "@raw"],
         )
         return log_events
 
@@ -340,9 +263,14 @@ class BrontoTools:
 
     def get_datasets_by_name(
         self,
-        dataset_name: Annotated[str, Field(description="The dataset name", min_length=1)],
+        dataset_name: Annotated[
+            str, Field(description="The dataset name", min_length=1)
+        ],
         collection_name: Annotated[
-            str, Field(description="The collection that the dataset is part of", min_length=1)
+            str,
+            Field(
+                description="The collection that the dataset is part of", min_length=1
+            ),
         ],
     ) -> Annotated[
         List[Dataset],
@@ -376,7 +304,11 @@ class BrontoTools:
         self,
         log_id: Annotated[
             str,
-            Field(description="The dataset ID, also named log ID", min_length=36, max_length=36),
+            Field(
+                description="The dataset ID, also named log ID",
+                min_length=36,
+                max_length=36,
+            ),
         ],
     ) -> Annotated[
         List[str],
@@ -409,28 +341,42 @@ class BrontoTools:
             "dataset."
         ),
     ]:
-        datasets_top_keys_and_values = self.bronto_client.get_all_datasets_top_keys_and_values()
+        datasets_top_keys_and_values = (
+            self.bronto_client.get_all_datasets_top_keys_and_values()
+        )
         keys_and_values = datasets_top_keys_and_values.get(log_id, {})
         key_and_values = keys_and_values.get(key, {})
         return key_and_values.get("values", {}).get(key, [])
 
     @staticmethod
-    def get_current_time() -> (
-        Annotated[str, Field(description="the current time in the YYYY-MM-DD HH:mm:ss format")]
-    ):
+    def get_current_time() -> Annotated[
+        str, Field(description="the current time in the YYYY-MM-DD HH:mm:ss format")
+    ]:
         return datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
 
     @staticmethod
-    def create_stmt_id() -> Annotated[str, Field(description='A statement ID, i.e. a 16 character logn string that can '
-                                                             'be used to uniquely identify a log statement')]:
+    def create_stmt_id() -> Annotated[
+        str,
+        Field(
+            description="A statement ID, i.e. a 16 character logn string that can "
+            "be used to uniquely identify a log statement"
+        ),
+    ]:
         return uuid.uuid4().hex[:16]
 
     @staticmethod
     def inject_stmt_ids(
-            src_path: Annotated[str, Field(description='The path to the source code where statement IDs should be '
-                                                       'injected into')]
-                        ) -> Annotated[str, Field(description='A prompt indicating how to inject IDs in log '
-                                                              'statements')]:
+        src_path: Annotated[
+            str,
+            Field(
+                description="The path to the source code where statement IDs should be "
+                "injected into"
+            ),
+        ],
+    ) -> Annotated[
+        str,
+        Field(description="A prompt indicating how to inject IDs in log statements"),
+    ]:
         return f"""A statement ID is a string of characters that uniquely identify a log statement. In order to inject 
         statement IDs, simply update log statements by appending ' stmt_id=<STMT_ID>'. The value of STMT_ID should be 
         constant and unique per log statement. Below are examples of log statements, based on the Python programming 
@@ -460,10 +406,16 @@ class BrontoTools:
         """
 
     @staticmethod
-    def extract_stmt_ids(stmt_id_filepath: str = 'statementIds.csv') -> \
-            Annotated[str, Field(description='A prompt that describes how to extract statement IDs from code in order '
-                                             'to create a mapping between these IDs and their corresponding log '
-                                             'statements')]:
+    def extract_stmt_ids(
+        stmt_id_filepath: str = "statementIds.csv",
+    ) -> Annotated[
+        str,
+        Field(
+            description="A prompt that describes how to extract statement IDs from code in order "
+            "to create a mapping between these IDs and their corresponding log "
+            "statements"
+        ),
+    ]:
         return f"""The messages of log statements in this project contain a key-value pair where the key name is 
           stmt_id. Can you please extract the value associated to each statement ID and associated it to the log 
           statement itself, as well as the file path and line number where the log statement is located? For instance, 
@@ -504,9 +456,15 @@ class BrontoTools:
           """
 
     @staticmethod
-    def update_stmt_ids(src_path: str, stmt_id_filepath: str = 'statementIds.csv') -> \
-            Annotated[str, Field(description='A prompt that describes how to update the statements file associated to '
-                                             'this project.')]:
+    def update_stmt_ids(
+        src_path: str, stmt_id_filepath: str = "statementIds.csv"
+    ) -> Annotated[
+        str,
+        Field(
+            description="A prompt that describes how to update the statements file associated to "
+            "this project."
+        ),
+    ]:
         return f"""Updating statement IDs consists of injecting statement IDs in log statements where they would be 
         missing as well as updating the details in {stmt_id_filepath} for log statements for which information would have 
         changed, e.g. filepath or line number would have changed. Descriptions on how to inject and extract statement 
@@ -520,22 +478,39 @@ class BrontoTools:
         """
 
     def deploy_statements(
-            self,
-            csv_file_path: Annotated[str, Field(
-                description='The path to the file containing the mapping between the log statements of the project and '
-                            'their corresponding statement IDs.'
-            )],
-            project_id: Annotated[str, Field(
-                description='This project ID, typically the artifact ID for a Maven project, the module name for a '
-                            'python project, or the Git repository name.'
-            )],
-            version: Annotated[str, Field(
-                description='The current version of this project'
-            )],
-            repo_url: Annotated[str, Field(
-                description='The Git repository URL. This is the https URL. This can be inferred from the `git remote` '
-                            'command'
-            )]) -> Annotated[Dict, Field(description='Sends to Bronto the list of log statements in this project with '
-                                                     'their corresponding statement IDs and returns whether this was '
-                                                     'performed successfully.')]:
-        return self.bronto_client.deploy_statements(csv_file_path, project_id, version, repo_url)
+        self,
+        csv_file_path: Annotated[
+            str,
+            Field(
+                description="The path to the file containing the mapping between the log statements of the project and "
+                "their corresponding statement IDs."
+            ),
+        ],
+        project_id: Annotated[
+            str,
+            Field(
+                description="This project ID, typically the artifact ID for a Maven project, the module name for a "
+                "python project, or the Git repository name."
+            ),
+        ],
+        version: Annotated[
+            str, Field(description="The current version of this project")
+        ],
+        repo_url: Annotated[
+            str,
+            Field(
+                description="The Git repository URL. This is the https URL. This can be inferred from the `git remote` "
+                "command"
+            ),
+        ],
+    ) -> Annotated[
+        Dict,
+        Field(
+            description="Sends to Bronto the list of log statements in this project with "
+            "their corresponding statement IDs and returns whether this was "
+            "performed successfully."
+        ),
+    ]:
+        return self.bronto_client.deploy_statements(
+            csv_file_path, project_id, version, repo_url
+        )
