@@ -1,6 +1,4 @@
-from typing import Optional
-
-from agents import BrontoAgentRegistry, build_agent_registry
+from agents import BrontoAgentRegistry
 from clients import BrontoClient
 
 
@@ -10,7 +8,10 @@ class BrontoToolContext:
     def __init__(
         self,
         bronto_client: BrontoClient,
-        agent_registry: Optional[BrontoAgentRegistry] = None,
+        agent_registry: BrontoAgentRegistry,
     ):
+        if len(agent_registry.agents) == 0:
+            raise ValueError("agent_registry must include at least one agent")
+
         self.bronto_client = bronto_client
-        self.agent_registry = agent_registry or build_agent_registry()
+        self.agent_registry = agent_registry

@@ -3,6 +3,7 @@ import time
 from datetime import datetime
 from unittest.mock import Mock
 
+from agents import build_agent_registry
 from tools import BrontoTools
 from models import Datapoint, Timeseries, LogEvent
 from clients import BrontoClient
@@ -16,7 +17,7 @@ def mock_bronto_client(monkeypatch):
 
 @pytest.fixture
 def bronto_tools(mock_bronto_client):
-    return BrontoTools(mock_bronto_client)
+    return BrontoTools(mock_bronto_client, build_agent_registry())
 
 
 def test_get_current_time():
@@ -92,7 +93,7 @@ def test_get_dataset_keys(monkeypatch):
         "get_top_keys",
         lambda _, __: {"key1": ["value1", "1"], "key2": ["value2", "2"]},
     )
-    bronto_tools = BrontoTools(bronto_client)
+    bronto_tools = BrontoTools(bronto_client, build_agent_registry())
     keys = bronto_tools.get_dataset_keys("test_log_id")
     assert len(keys) == 2
     assert "key1" in keys
