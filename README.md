@@ -10,11 +10,11 @@ _Can you please provide some log events from datasets in the ingestion collectio
 
 ## Installation
 
-Check out this project, then create a virtual environment at its root. Finally install the requirements, e.g.
+Check out this project, then use `uv` to create a project-local virtual environment and install dependencies.
 
 ```shell
-python3 -m venv env
-env/bin/pip install -r requirements.txt
+uv venv .venv
+uv sync --dev
 ```
 
 ## Configuration
@@ -32,7 +32,12 @@ To run the mcp server from the root of this project, you can use the following c
 BRONTO_API_KEY=<API KEY HERE> \
 BRONTO_API_ENDPOINT=https://api.eu.bronto.io \
 PYTHONPATH=src/main/ \
-env/bin/python src/main/brmcpserver/main.py
+uv run python src/main/brmcpserver/main.py
+```
+
+To run tests and coverage:
+```shell
+./test.sh
 ```
 
 This MCP server should work with any agent that supports MCP. However, it has only been tested with Claude Code.
