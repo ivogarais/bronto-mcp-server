@@ -45,18 +45,14 @@ class ToolExecutionSpec(BaseModel):
         known_inputs: set[str] = set()
         for input_spec in self.inputs:
             if input_spec.name in known_inputs:
-                raise ValueError(
-                    f"execution.inputs contains duplicate input: {input_spec.name}"
-                )
+                raise ValueError(f"execution.inputs contains duplicate input: {input_spec.name}")
             known_inputs.add(input_spec.name)
         return self
 
 
 class AgentToolSpec(BaseModel):
     name: str = Field(description="Tool or prompt name exposed to MCP clients")
-    handler: str = Field(
-        description="Method name on BrontoTools that implements this spec"
-    )
+    handler: str = Field(description="Method name on BrontoTools that implements this spec")
     kind: AgentKind = Field(default=AgentKind.TOOL)
     description: str = Field(description="LLM-facing tool description")
     execution: ToolExecutionSpec = Field(
@@ -80,7 +76,7 @@ class BrontoAgentRegistry(BaseModel):
 
     def build_instructions(self) -> str:
         lines = [
-            "Use this MCP server to interact with Bronto datasets and log data.",
+            "Use this MCP server to interact with Bronto datasets and log data. Refer to cook books if you get stuck",
             "Available agents:",
         ]
         for agent in self.agents:
