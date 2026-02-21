@@ -43,10 +43,20 @@ class StatementIdsAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
+                name=StatementIdsToolName.STATEMENT_IDS_PLAYBOOK.value,
+                handler=StatementIdsToolHandler.STATEMENT_IDS_PLAYBOOK.value,
+                kind=AgentKind.PROMPT,
+                description="Playbook for statement ID workflow, from injection to deployment.",
+                execution=ToolExecutionSpec(
+                    output=ToolOutputSpec(value_type=str),
+                    notes="On-demand overview for statement ID lifecycle tasks.",
+                ),
+            ),
+            AgentToolSpec(
                 name=StatementIdsToolName.INJECT_STMT_IDS.value,
                 handler=StatementIdsToolHandler.INJECT_STMT_IDS.value,
                 kind=AgentKind.PROMPT,
-                description="Prompt template explaining how to inject statement IDs in source files.",
+                description="Playbook template explaining how to inject statement IDs in source files.",
                 execution=ToolExecutionSpec(
                     inputs=[ToolInputSpec(name="src_path", value_type=str)],
                     output=ToolOutputSpec(value_type=str),
@@ -57,7 +67,7 @@ class StatementIdsAgentSpec(BaseModel):
                 name=StatementIdsToolName.EXTRACT_STMT_IDS.value,
                 handler=StatementIdsToolHandler.EXTRACT_STMT_IDS.value,
                 kind=AgentKind.PROMPT,
-                description="Prompt template explaining how to extract statement IDs and write statementIds.csv.",
+                description="Playbook template explaining how to extract statement IDs and write statementIds.csv.",
                 execution=ToolExecutionSpec(
                     inputs=[
                         ToolInputSpec(
@@ -74,7 +84,7 @@ class StatementIdsAgentSpec(BaseModel):
                 name=StatementIdsToolName.UPDATE_STMT_IDS.value,
                 handler=StatementIdsToolHandler.UPDATE_STMT_IDS.value,
                 kind=AgentKind.PROMPT,
-                description="Prompt template for updating injected IDs and refreshing statementIds.csv.",
+                description="Playbook template for updating injected IDs and refreshing statementIds.csv.",
                 execution=ToolExecutionSpec(
                     inputs=[
                         ToolInputSpec(name="src_path", value_type=str),

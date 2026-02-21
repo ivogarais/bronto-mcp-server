@@ -111,5 +111,25 @@ class SearchAgentSpec(BaseModel):
                     notes="Use when callers need current wall-clock reference.",
                 ),
             ),
+            AgentToolSpec(
+                name=SearchToolName.SEARCH_LOGS_PLAYBOOK.value,
+                handler=SearchToolHandler.SEARCH_LOGS_PLAYBOOK.value,
+                kind=AgentKind.PROMPT,
+                description="Playbook for safe raw log retrieval workflow.",
+                execution=ToolExecutionSpec(
+                    output=ToolOutputSpec(value_type=str),
+                    notes="On-demand usage guidance and filter safety rules.",
+                ),
+            ),
+            AgentToolSpec(
+                name=SearchToolName.COMPUTE_METRICS_PLAYBOOK.value,
+                handler=SearchToolHandler.COMPUTE_METRICS_PLAYBOOK.value,
+                kind=AgentKind.PROMPT,
+                description="Playbook for robust metric computation workflow.",
+                execution=ToolExecutionSpec(
+                    output=ToolOutputSpec(value_type=str),
+                    notes="On-demand guidance for metric and grouping strategy.",
+                ),
+            ),
         ]
     )

@@ -5,6 +5,7 @@ from typing import Dict, List, Optional
 from pydantic import BeforeValidator, Field
 from typing_extensions import Annotated
 
+from bronto.agents.playbooks import resolve_playbook
 from bronto.logger import module_logger
 from bronto.schemas import Datapoint, LogEvent, Timeseries
 
@@ -13,6 +14,20 @@ logger = module_logger(__name__)
 
 class SearchToolHandlers:
     """Search and metrics handlers exposed as MCP tools."""
+
+    @staticmethod
+    def search_logs_playbook() -> Annotated[
+        str,
+        Field(
+            description=(
+                "Playbook for retrieving raw events with safe filters, "
+                "validated keys, and explicit time windows."
+            )
+        ),
+    ]:
+        return resolve_playbook(
+            "bronto.agents.search", "playbooks/search_logs_playbook.md"
+        )
 
     def search_logs(
         self,
@@ -218,3 +233,17 @@ class SearchToolHandlers:
         str, Field(description="the current time in the YYYY-MM-DD HH:mm:ss format")
     ]:
         return datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
+
+    @staticmethod
+    def compute_metrics_playbook() -> Annotated[
+        str,
+        Field(
+            description=(
+                "Playbook for metric selection, grouping strategy, and "
+                "post-metric drill-down."
+            )
+        ),
+    ]:
+        return resolve_playbook(
+            "bronto.agents.search", "playbooks/compute_metrics_playbook.md"
+        )

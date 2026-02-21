@@ -100,6 +100,48 @@ def test_get_dataset_keys(monkeypatch):
     assert "key2" in keys
 
 
+def test_playbook_prompts_are_registered():
+    registry = build_agent_registry()
+    tool_names = {tool.name for tool in registry.iter_tool_specs()}
+
+    assert "datasets_playbook" in tool_names
+    assert "search_logs_playbook" in tool_names
+    assert "compute_metrics_playbook" in tool_names
+    assert "statement_ids_playbook" in tool_names
+
+
+def test_datasets_playbook_prompt(bronto_tools):
+    prompt = bronto_tools.datasets_playbook()
+
+    assert "get_datasets" in prompt
+    assert "get_keys" in prompt
+    assert "double-quoted" in prompt
+
+
+def test_search_logs_playbook_prompt(bronto_tools):
+    prompt = bronto_tools.search_logs_playbook()
+
+    assert "log_ids" in prompt
+    assert "get_timestamp_as_unix_epoch" in prompt
+    assert "single-quoted" in prompt
+
+
+def test_compute_metrics_playbook_prompt(bronto_tools):
+    prompt = bronto_tools.compute_metrics_playbook()
+
+    assert "COUNT(*)" in prompt
+    assert "group_by_keys" in prompt
+    assert "search_logs" in prompt
+
+
+def test_statement_ids_playbook_prompt(bronto_tools):
+    prompt = bronto_tools.statement_ids_playbook()
+
+    assert "create_stmt_id" in prompt
+    assert "inject_stmt_ids" in prompt
+    assert "deploy_statements" in prompt
+
+
 def test_get_key_values(bronto_tools, mock_bronto_client):
     mock_bronto_client.get_top_keys.return_value = {
         "service": ["api", "worker"],

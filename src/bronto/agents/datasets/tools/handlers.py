@@ -3,6 +3,7 @@ from typing import Dict, List
 from pydantic import Field
 from typing_extensions import Annotated
 
+from bronto.agents.playbooks import resolve_playbook
 from bronto.schemas import Dataset
 
 
@@ -114,3 +115,17 @@ class DatasetsToolHandlers:
     ]:
         dataset_top_keys = self.bronto_client.get_top_keys(log_id)
         return dataset_top_keys.get(key, [])
+
+    @staticmethod
+    def datasets_playbook() -> Annotated[
+        str,
+        Field(
+            description=(
+                "Playbook that explains a safe dataset and key-discovery "
+                "workflow before running searches."
+            )
+        ),
+    ]:
+        return resolve_playbook(
+            "bronto.agents.datasets", "playbooks/datasets_playbook.md"
+        )

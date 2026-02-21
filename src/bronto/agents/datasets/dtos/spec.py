@@ -77,5 +77,15 @@ class DatasetsAgentSpec(BaseModel):
                     notes="Useful for building valid filter predicates.",
                 ),
             ),
+            AgentToolSpec(
+                name=DatasetsToolName.DATASETS_PLAYBOOK.value,
+                handler=DatasetsToolHandler.DATASETS_PLAYBOOK.value,
+                kind=AgentKind.PROMPT,
+                description="Playbook for dataset discovery and key validation.",
+                execution=ToolExecutionSpec(
+                    output=ToolOutputSpec(value_type=str),
+                    notes="On-demand guidance to keep global instructions concise.",
+                ),
+            ),
         ]
     )
