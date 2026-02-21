@@ -3,10 +3,10 @@ import time
 from datetime import datetime
 from unittest.mock import Mock
 
-from agents import build_agent_registry
-from tools import BrontoTools
-from schemas import Datapoint, Timeseries, LogEvent
-from clients import BrontoClient
+from bronto.agents import build_agent_registry
+from bronto.clients import BrontoClient
+from bronto.schemas import Datapoint, LogEvent, Timeseries
+from bronto.tools import BrontoTools
 
 
 @pytest.fixture

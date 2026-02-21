@@ -5,8 +5,8 @@ from typing import Dict, List, Optional
 from pydantic import BeforeValidator, Field
 from typing_extensions import Annotated
 
-from logger import module_logger
-from schemas import Datapoint, LogEvent, Timeseries
+from bronto.logger import module_logger
+from bronto.schemas import Datapoint, LogEvent, Timeseries
 
 logger = module_logger(__name__)
 

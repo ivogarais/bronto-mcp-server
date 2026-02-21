@@ -1,4 +1,4 @@
-from agents import AgentKind
+from bronto.agents import AgentKind
 
 
 class MCPToolRegistrar:

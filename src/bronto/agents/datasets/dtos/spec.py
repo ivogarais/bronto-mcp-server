@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from schemas import Dataset
+from bronto.schemas import Dataset
 
 from ...base import (
     AgentKind,

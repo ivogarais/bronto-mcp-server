@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from schemas import LogEvent, Timeseries
+from bronto.schemas import LogEvent, Timeseries
 
 from ...base import (
     AgentKind,

@@ -1,5 +1,5 @@
-from agents import BrontoAgentRegistry
-from clients import BrontoClient
+from bronto.agents import BrontoAgentRegistry
+from bronto.clients import BrontoClient
 
 
 class BrontoToolContext:

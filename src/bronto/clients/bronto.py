@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
-from logger import module_logger
-from schemas import DatasetKey, LogEvent
+from bronto.logger import module_logger
+from bronto.schemas import DatasetKey, LogEvent
 
 logger = module_logger(__name__)
 

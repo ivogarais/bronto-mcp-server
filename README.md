@@ -31,8 +31,7 @@ To run the mcp server from the root of this project, you can use the following c
 ```shell
 BRONTO_API_KEY=<API KEY HERE> \
 BRONTO_API_ENDPOINT=https://api.eu.bronto.io \
-PYTHONPATH=src/bronto \
-uv run python run/mcp_server.py
+uv run bronto-mcp
 ```
 
 To run tests and coverage:
