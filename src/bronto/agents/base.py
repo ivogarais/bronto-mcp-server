@@ -1,6 +1,12 @@
-from typing import Iterable, Literal
+from enum import Enum
+from typing import Iterable
 
 from pydantic import BaseModel, Field, model_validator
+
+
+class AgentKind(str, Enum):
+    TOOL = "tool"
+    PROMPT = "prompt"
 
 
 class ToolExecutionSpec(BaseModel):
@@ -20,7 +26,7 @@ class AgentToolSpec(BaseModel):
     handler: str = Field(
         description="Method name on BrontoTools that implements this spec"
     )
-    kind: Literal["tool", "prompt"] = Field(default="tool")
+    kind: AgentKind = Field(default=AgentKind.TOOL)
     description: str = Field(description="LLM-facing tool description")
     execution: ToolExecutionSpec = Field(
         description="Execution contract used for validation and discovery"

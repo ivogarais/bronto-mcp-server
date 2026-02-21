@@ -4,7 +4,7 @@ from datetime import datetime
 from unittest.mock import Mock
 
 from tools import BrontoTools
-from models import Datapoint, Timeseries, DatasetKey, LogEvent
+from models import Datapoint, Timeseries, LogEvent
 from clients import BrontoClient
 
 

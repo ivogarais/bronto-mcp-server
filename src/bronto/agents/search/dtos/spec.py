@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
-from ...base import AgentToolSpec, ToolExecutionSpec
+from ...base import AgentKind, AgentToolSpec, ToolExecutionSpec
+from ..enums import SearchToolHandler, SearchToolName
 
 
 class SearchAgentSpec(BaseModel):
@@ -10,9 +11,9 @@ class SearchAgentSpec(BaseModel):
     tools: list[AgentToolSpec] = Field(
         default_factory=lambda: [
             AgentToolSpec(
-                name="search_logs",
-                handler="search_logs",
-                kind="tool",
+                name=SearchToolName.SEARCH_LOGS.value,
+                handler=SearchToolHandler.SEARCH_LOGS.value,
+                kind=AgentKind.TOOL,
                 description=(
                     "Search log events from selected dataset IDs and time range, with optional SQL-like filter."
                 ),
@@ -23,9 +24,9 @@ class SearchAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
-                name="compute_metrics",
-                handler="compute_metrics",
-                kind="tool",
+                name=SearchToolName.COMPUTE_METRICS.value,
+                handler=SearchToolHandler.COMPUTE_METRICS.value,
+                kind=AgentKind.TOOL,
                 description=(
                     "Compute metrics such as AVG, MIN, MAX, COUNT, SUM over log data and group keys."
                 ),
@@ -36,9 +37,9 @@ class SearchAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
-                name="get_timestamp_as_unix_epoch",
-                handler="get_timestamp_as_unix_epoch",
-                kind="tool",
+                name=SearchToolName.GET_TIMESTAMP_AS_UNIX_EPOCH.value,
+                handler=SearchToolHandler.GET_TIMESTAMP_AS_UNIX_EPOCH.value,
+                kind=AgentKind.TOOL,
                 description="Convert a timestamp in YYYY-MM-DD HH:mm:ss to unix epoch milliseconds.",
                 execution=ToolExecutionSpec(
                     required_inputs=["input_time"],
@@ -47,9 +48,9 @@ class SearchAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
-                name="get_current_time",
-                handler="get_current_time",
-                kind="tool",
+                name=SearchToolName.GET_CURRENT_TIME.value,
+                handler=SearchToolHandler.GET_CURRENT_TIME.value,
+                kind=AgentKind.TOOL,
                 description="Return current time in YYYY-MM-DD HH:mm:ss.",
                 execution=ToolExecutionSpec(
                     required_inputs=[],

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
-from ...base import AgentToolSpec, ToolExecutionSpec
+from ...base import AgentKind, AgentToolSpec, ToolExecutionSpec
+from ..enums import StatementIdsToolHandler, StatementIdsToolName
 
 
 class StatementIdsAgentSpec(BaseModel):
@@ -10,9 +11,9 @@ class StatementIdsAgentSpec(BaseModel):
     tools: list[AgentToolSpec] = Field(
         default_factory=lambda: [
             AgentToolSpec(
-                name="create_stmt_id",
-                handler="create_stmt_id",
-                kind="tool",
+                name=StatementIdsToolName.CREATE_STMT_ID.value,
+                handler=StatementIdsToolHandler.CREATE_STMT_ID.value,
+                kind=AgentKind.TOOL,
                 description="Generate a random 16-character statement ID.",
                 execution=ToolExecutionSpec(
                     required_inputs=[],
@@ -21,9 +22,9 @@ class StatementIdsAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
-                name="deploy_statements",
-                handler="deploy_statements",
-                kind="tool",
+                name=StatementIdsToolName.DEPLOY_STATEMENTS.value,
+                handler=StatementIdsToolHandler.DEPLOY_STATEMENTS.value,
+                kind=AgentKind.TOOL,
                 description="Deploy a CSV mapping of statement IDs and log statements to Bronto.",
                 execution=ToolExecutionSpec(
                     required_inputs=[
@@ -37,9 +38,9 @@ class StatementIdsAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
-                name="inject_stmt_ids",
-                handler="inject_stmt_ids",
-                kind="prompt",
+                name=StatementIdsToolName.INJECT_STMT_IDS.value,
+                handler=StatementIdsToolHandler.INJECT_STMT_IDS.value,
+                kind=AgentKind.PROMPT,
                 description="Prompt template explaining how to inject statement IDs in source files.",
                 execution=ToolExecutionSpec(
                     required_inputs=["src_path"],
@@ -48,9 +49,9 @@ class StatementIdsAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
-                name="extract_stmt_ids",
-                handler="extract_stmt_ids",
-                kind="prompt",
+                name=StatementIdsToolName.EXTRACT_STMT_IDS.value,
+                handler=StatementIdsToolHandler.EXTRACT_STMT_IDS.value,
+                kind=AgentKind.PROMPT,
                 description="Prompt template explaining how to extract statement IDs and write statementIds.csv.",
                 execution=ToolExecutionSpec(
                     required_inputs=[],
@@ -59,9 +60,9 @@ class StatementIdsAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
-                name="update_stmt_ids",
-                handler="update_stmt_ids",
-                kind="prompt",
+                name=StatementIdsToolName.UPDATE_STMT_IDS.value,
+                handler=StatementIdsToolHandler.UPDATE_STMT_IDS.value,
+                kind=AgentKind.PROMPT,
                 description="Prompt template for updating injected IDs and refreshing statementIds.csv.",
                 execution=ToolExecutionSpec(
                     required_inputs=["src_path"],

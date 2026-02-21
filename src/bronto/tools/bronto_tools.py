@@ -5,7 +5,7 @@ from pydantic import Field, BeforeValidator
 from typing_extensions import Annotated
 from datetime import datetime, timezone
 from typing import List, Optional, Dict
-from agents import BrontoAgentRegistry, create_default_agent_registry
+from agents import AgentKind, BrontoAgentRegistry, create_default_agent_registry
 from logger import module_logger
 from models import Dataset, LogEvent, Datapoint, Timeseries
 
@@ -30,7 +30,7 @@ class BrontoTools:
             handler = getattr(self, tool_spec.handler, None)
             if handler is None:
                 raise AttributeError(f"Unknown tool handler: {tool_spec.handler}")
-            if tool_spec.kind == "prompt":
+            if tool_spec.kind is AgentKind.PROMPT:
                 mcp.prompt(name=tool_spec.name)(handler)
             else:
                 mcp.tool(name=tool_spec.name, description=tool_spec.description)(
