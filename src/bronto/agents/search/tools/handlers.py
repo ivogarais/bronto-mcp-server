@@ -229,9 +229,11 @@ class SearchToolHandlers:
         )
 
     @staticmethod
-    def get_current_time() -> Annotated[
-        str, Field(description="the current time in the YYYY-MM-DD HH:mm:ss format")
-    ]:
+    def get_current_time() -> (
+        Annotated[
+            str, Field(description="the current time in the YYYY-MM-DD HH:mm:ss format")
+        ]
+    ):
         return datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
 
     @staticmethod

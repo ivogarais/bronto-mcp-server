@@ -39,10 +39,14 @@ class DatasetsToolHandlers:
 
     def get_datasets_by_name(
         self,
-        dataset_name: Annotated[str, Field(description="The dataset name", min_length=1)],
+        dataset_name: Annotated[
+            str, Field(description="The dataset name", min_length=1)
+        ],
         collection_name: Annotated[
             str,
-            Field(description="The collection that the dataset is part of", min_length=1),
+            Field(
+                description="The collection that the dataset is part of", min_length=1
+            ),
         ],
     ) -> Annotated[
         List[Dataset],

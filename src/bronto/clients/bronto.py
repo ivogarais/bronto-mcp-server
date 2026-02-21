@@ -270,7 +270,9 @@ class BrontoClient:
         return log_ids_and_keys_and_values
 
     @staticmethod
-    def get_dataset_key(key_name: str, dataset_keys: List[DatasetKey]) -> Optional[DatasetKey]:
+    def get_dataset_key(
+        key_name: str, dataset_keys: List[DatasetKey]
+    ) -> Optional[DatasetKey]:
         for dataset_key in dataset_keys:
             if dataset_key.name == key_name:
                 return dataset_key

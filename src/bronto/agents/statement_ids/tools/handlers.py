@@ -72,7 +72,9 @@ class StatementIdsToolHandlers:
             src_path=src_path,
             stmt_id_filepath=stmt_id_filepath,
             inject_playbook=StatementIdsToolHandlers.inject_stmt_ids(src_path),
-            extract_playbook=StatementIdsToolHandlers.extract_stmt_ids(stmt_id_filepath),
+            extract_playbook=StatementIdsToolHandlers.extract_stmt_ids(
+                stmt_id_filepath
+            ),
         )
 
     @staticmethod

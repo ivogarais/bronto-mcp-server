@@ -12,7 +12,9 @@ def _resolve_level(level: str | int | None) -> int:
     if isinstance(level, int):
         return level
 
-    raw_value = level if level is not None else os.getenv("BRONTO_LOG_LEVEL", DEFAULT_LEVEL)
+    raw_value = (
+        level if level is not None else os.getenv("BRONTO_LOG_LEVEL", DEFAULT_LEVEL)
+    )
     normalized = str(raw_value).strip().upper()
 
     if normalized.isdigit():

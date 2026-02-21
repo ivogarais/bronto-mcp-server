@@ -1,2 +1,1 @@
 """Bronto MCP server package."""
-

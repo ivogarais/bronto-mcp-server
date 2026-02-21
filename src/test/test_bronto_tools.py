@@ -154,7 +154,9 @@ def test_get_key_values(bronto_tools, mock_bronto_client):
     assert values == ["api", "worker"]
 
 
-def test_get_key_values_missing_key_returns_empty_list(bronto_tools, mock_bronto_client):
+def test_get_key_values_missing_key_returns_empty_list(
+    bronto_tools, mock_bronto_client
+):
     mock_bronto_client.get_top_keys.return_value = {"service": ["api", "worker"]}
 
     values = bronto_tools.get_key_values("missing", "test_log_id")

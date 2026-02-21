@@ -45,7 +45,9 @@ class ToolExecutionSpec(BaseModel):
         known_inputs: set[str] = set()
         for input_spec in self.inputs:
             if input_spec.name in known_inputs:
-                raise ValueError(f"execution.inputs contains duplicate input: {input_spec.name}")
+                raise ValueError(
+                    f"execution.inputs contains duplicate input: {input_spec.name}"
+                )
             known_inputs.add(input_spec.name)
         return self
 

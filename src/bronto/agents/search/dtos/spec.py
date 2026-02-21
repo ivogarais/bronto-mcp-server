@@ -70,9 +70,7 @@ class SearchAgentSpec(BaseModel):
                             required=False,
                         ),
                         ToolInputSpec(name="log_ids", value_type=list[str]),
-                        ToolInputSpec(
-                            name="metric_functions", value_type=list[str]
-                        ),
+                        ToolInputSpec(name="metric_functions", value_type=list[str]),
                         ToolInputSpec(
                             name="search_filter",
                             value_type=str,

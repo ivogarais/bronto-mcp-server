@@ -36,9 +36,12 @@ class Dataset(BaseModel):
 
 class DatasetKey(BaseModel):
     name: Annotated[
-        str, Field(description="The name of the key, e.g. `environment`, `$service`, etc")
+        str,
+        Field(description="The name of the key, e.g. `environment`, `$service`, etc"),
     ]
-    values: Annotated[List[str], Field(default=[], description="Sample values of the key")]
+    values: Annotated[
+        List[str], Field(default=[], description="Sample values of the key")
+    ]
 
     def add_values(self, values: List[str]) -> None:
         for value in values:

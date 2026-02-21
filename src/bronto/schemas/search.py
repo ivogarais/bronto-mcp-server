@@ -30,14 +30,18 @@ class LogEvent(BaseModel):
 
 
 class Datapoint(BaseModel):
-    timestamp: Annotated[int, Field(description="The unix epoch timestamp of the datapoint")]
+    timestamp: Annotated[
+        int, Field(description="The unix epoch timestamp of the datapoint")
+    ]
     count: Annotated[
         int,
         Field(
             description="The number of events used to compute the metric value of the datapoint"
         ),
     ]
-    quantiles: Annotated[Dict[float, float], Field(description="Map containing quantiles values")]
+    quantiles: Annotated[
+        Dict[float, float], Field(description="Map containing quantiles values")
+    ]
     value: Annotated[
         float, Field(description="The value of the metric associated to the datapoint")
     ]
@@ -45,6 +49,11 @@ class Datapoint(BaseModel):
 
 class Timeseries(BaseModel):
     count: Annotated[
-        int, Field(description="The number of events used to compute the total metric value")
+        int,
+        Field(
+            description="The number of events used to compute the total metric value"
+        ),
     ]
-    timeseries: Annotated[List[Datapoint], Field(description="A list of datapoints per timestamp")]
+    timeseries: Annotated[
+        List[Datapoint], Field(description="A list of datapoints per timestamp")
+    ]

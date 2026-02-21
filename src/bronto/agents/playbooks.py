@@ -6,8 +6,8 @@ from string import Template
 @lru_cache(maxsize=32)
 def resolve_playbook(package: str, resource_path: str) -> str:
     try:
-        content = resources.files(package).joinpath(resource_path).read_text(
-            encoding="utf-8"
+        content = (
+            resources.files(package).joinpath(resource_path).read_text(encoding="utf-8")
         )
     except (FileNotFoundError, ModuleNotFoundError, OSError) as exc:
         raise RuntimeError(
