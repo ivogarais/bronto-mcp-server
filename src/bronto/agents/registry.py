@@ -4,7 +4,7 @@ from .search import SearchAgent
 from .statement_ids import StatementIdsAgent
 
 
-def create_default_agent_registry() -> BrontoAgentRegistry:
+def build_agent_registry() -> BrontoAgentRegistry:
     return BrontoAgentRegistry(
         agents=[
             SearchAgent(),

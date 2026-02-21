@@ -1,3 +1,3 @@
-from .handlers import DatasetToolHandlers
+from .handlers import DatasetsToolHandlers
 
-__all__ = ["DatasetToolHandlers"]
+__all__ = ["DatasetsToolHandlers"]

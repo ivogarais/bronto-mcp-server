@@ -1,7 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 from config import Config
 from clients import BrontoClient
-from agents import create_default_agent_registry
+from agents import build_agent_registry
 from logger import bootstrap_logging, module_logger
 from tools import BrontoTools
 
@@ -11,7 +11,7 @@ logger = module_logger(__name__)
 if __name__ == "__main__":
     bootstrap_logging()
     logger.info("Starting Bronto MCP server")
-    agent_registry = create_default_agent_registry()
+    agent_registry = build_agent_registry()
     mcp = FastMCP(
         "Bronto",
         stateless_http=True,

@@ -1,10 +1,10 @@
 from typing import Optional
 
-from agents import BrontoAgentRegistry, create_default_agent_registry
+from agents import BrontoAgentRegistry, build_agent_registry
 from clients import BrontoClient
 
 
-class BrontoToolsBase:
+class BrontoToolContext:
     """Shared dependencies for Bronto MCP tool handlers."""
 
     def __init__(
@@ -13,4 +13,4 @@ class BrontoToolsBase:
         agent_registry: Optional[BrontoAgentRegistry] = None,
     ):
         self.bronto_client = bronto_client
-        self.agent_registry = agent_registry or create_default_agent_registry()
+        self.agent_registry = agent_registry or build_agent_registry()

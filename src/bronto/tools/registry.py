@@ -1,7 +1,7 @@
 from agents import AgentKind
 
 
-class MCPToolRegistrationMixin:
+class MCPToolRegistrar:
     """Registers handlers defined on BrontoTools with MCP based on agent specs."""
 
     def register(self, mcp):

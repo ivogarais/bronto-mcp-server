@@ -1,15 +1,15 @@
-from .base import BrontoToolsBase
-from .registry import MCPToolRegistrationMixin
-from agents.datasets.tools import DatasetToolHandlers
+from .base import BrontoToolContext
+from .registry import MCPToolRegistrar
+from agents.datasets.tools import DatasetsToolHandlers
 from agents.search.tools import SearchToolHandlers
 from agents.statement_ids.tools import StatementIdsToolHandlers
 
 
 class BrontoTools(
-    BrontoToolsBase,
-    MCPToolRegistrationMixin,
+    BrontoToolContext,
+    MCPToolRegistrar,
     SearchToolHandlers,
-    DatasetToolHandlers,
+    DatasetsToolHandlers,
     StatementIdsToolHandlers,
 ):
     """Facade exposing all Bronto tool handlers and MCP registration."""

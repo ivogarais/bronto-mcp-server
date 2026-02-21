@@ -7,7 +7,7 @@ from .base import (
     ToolInputSpec,
     ToolOutputSpec,
 )
-from .registry import create_default_agent_registry
+from .registry import build_agent_registry
 from .search import SearchAgent
 from .datasets import DatasetsAgent
 from .statement_ids import StatementIdsAgent
@@ -23,5 +23,5 @@ __all__ = [
     "SearchAgent",
     "DatasetsAgent",
     "StatementIdsAgent",
-    "create_default_agent_registry",
+    "build_agent_registry",
 ]

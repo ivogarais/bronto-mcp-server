@@ -6,7 +6,7 @@ from typing_extensions import Annotated
 from models import Dataset
 
 
-class DatasetToolHandlers:
+class DatasetsToolHandlers:
     """Dataset discovery and metadata handlers exposed as MCP tools."""
 
     def get_datasets(
