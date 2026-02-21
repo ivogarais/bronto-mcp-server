@@ -52,6 +52,9 @@ terraform.rc
 # VS Code local workspace settings
 .vscode/settings.json
 
+# Local env config
+.env
+
 # Python virtual envs
 **/env/
 **/.venv/

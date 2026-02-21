@@ -10,11 +10,29 @@ _Can you please provide some log events from datasets in the ingestion collectio
 
 ## Installation
 
-Check out this project, then use `uv` to create a project-local virtual environment and install dependencies.
+1. Clone and enter the repo:
 
 ```shell
-uv venv .venv
-uv sync --dev
+git clone https://github.com/ivogarais/bronto-mcp-server
+cd bronto-mcp-server
+```
+
+2. Create your local config file:
+
+```shell
+cp .env.example .env
+```
+
+3. Open `.env` and set your values:
+
+```shell
+${EDITOR:-nano} .env
+```
+
+Example `.env` values:
+```dotenv
+BRONTO_API_KEY=your-real-api-key
+BRONTO_API_ENDPOINT=https://api.eu.bronto.io
 ```
 
 ## Configuration
@@ -31,32 +49,30 @@ This MCP server is configured using environment variables:
 
 ## Usage
 
-To run the MCP server in local `stdio` mode (recommended default for broad client compatibility):
+Install dependencies and register the server for Claude Code:
 ```shell
-BRONTO_API_KEY=<API KEY HERE> \
-BRONTO_API_ENDPOINT=https://api.eu.bronto.io \
-make run
+./install.sh claude
 ```
 
-To run the MCP server in `streamable-http` mode:
+Install dependencies and register the server for Codex:
 ```shell
-BRONTO_API_KEY=<API KEY HERE> \
-BRONTO_API_ENDPOINT=https://api.eu.bronto.io \
-BRONTO_MCP_TRANSPORT=streamable-http \
-BRONTO_MCP_HOST=127.0.0.1 \
-BRONTO_MCP_PORT=8000 \
-BRONTO_MCP_STREAMABLE_HTTP_PATH=/ \
-make run-http
+./install.sh codex
 ```
 
-To run tests and coverage:
+Register for both:
 ```shell
-make test
+./install.sh all
+```
+
+Manual run commands (if needed):
+```shell
+./scripts/bronto-mcp
+BRONTO_MCP_TRANSPORT=streamable-http uv run bronto-mcp
 ```
 
 This MCP server should work with any agent that supports MCP. However, it has only been tested with Claude Code.
 
-Finally, in order to configure Claude Code so that it uses the Bronto MCP server in HTTP mode, simply run 
+Finally, in order to configure Claude Code manually for HTTP mode, run:
 ```json
 claude mcp add --transport http bronto http://localhost:8000
 ```
