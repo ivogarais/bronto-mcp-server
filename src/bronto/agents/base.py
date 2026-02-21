@@ -76,7 +76,7 @@ class BrontoAgentRegistry(BaseModel):
 
     def build_instructions(self) -> str:
         lines = [
-            "Use this MCP server to interact with Bronto datasets and log data. Refer to cook books if you get stuck",
+            "Use this MCP server to interact with Bronto datasets and log data. Refer to play books if you get stuck",
             "Available agents:",
         ]
         for agent in self.agents:
