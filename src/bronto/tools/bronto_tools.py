@@ -1,8 +1,8 @@
 from .base import BrontoToolsBase
-from .datasets import DatasetToolHandlers
 from .registry import MCPToolRegistrationMixin
-from .search import SearchToolHandlers
-from .statement_ids import StatementIdsToolHandlers
+from agents.datasets.tools import DatasetToolHandlers
+from agents.search.tools import SearchToolHandlers
+from agents.statement_ids.tools import StatementIdsToolHandlers
 
 
 class BrontoTools(
