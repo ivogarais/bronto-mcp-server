@@ -1,6 +1,14 @@
 from pydantic import BaseModel, Field
 
-from ...base import AgentKind, AgentToolSpec, ToolExecutionSpec
+from models import Dataset
+
+from ...base import (
+    AgentKind,
+    AgentToolSpec,
+    ToolExecutionSpec,
+    ToolInputSpec,
+    ToolOutputSpec,
+)
 from ..enums import DatasetsToolHandler, DatasetsToolName
 
 
@@ -16,8 +24,7 @@ class DatasetsAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="Fetch all available dataset details including log IDs and tags.",
                 execution=ToolExecutionSpec(
-                    required_inputs=[],
-                    expected_output="List[Dataset]",
+                    output=ToolOutputSpec(value_type=list[Dataset]),
                     notes="Use first when selecting datasets for queries.",
                 ),
             ),
@@ -27,8 +34,11 @@ class DatasetsAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="Fetch datasets matching an exact dataset name and collection name.",
                 execution=ToolExecutionSpec(
-                    required_inputs=["dataset_name", "collection_name"],
-                    expected_output="List[Dataset]",
+                    inputs=[
+                        ToolInputSpec(name="dataset_name", value_type=str),
+                        ToolInputSpec(name="collection_name", value_type=str),
+                    ],
+                    output=ToolOutputSpec(value_type=list[Dataset]),
                     notes="Resolves log IDs from human-readable names.",
                 ),
             ),
@@ -38,8 +48,8 @@ class DatasetsAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="List all keys present in a dataset identified by log ID.",
                 execution=ToolExecutionSpec(
-                    required_inputs=["log_id"],
-                    expected_output="List[str]",
+                    inputs=[ToolInputSpec(name="log_id", value_type=str)],
+                    output=ToolOutputSpec(value_type=list[str]),
                     notes="Use before building filters to avoid invalid key names.",
                 ),
             ),
@@ -49,8 +59,7 @@ class DatasetsAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="List keys for every dataset, grouped by dataset ID.",
                 execution=ToolExecutionSpec(
-                    required_inputs=[],
-                    expected_output="Dict[str, List[str]]",
+                    output=ToolOutputSpec(value_type=dict[str, list[str]]),
                     notes="Helps identify candidate datasets for a given key.",
                 ),
             ),
@@ -60,8 +69,11 @@ class DatasetsAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="Fetch sample values for a key in a specific dataset.",
                 execution=ToolExecutionSpec(
-                    required_inputs=["key", "log_id"],
-                    expected_output="List[str]",
+                    inputs=[
+                        ToolInputSpec(name="key", value_type=str),
+                        ToolInputSpec(name="log_id", value_type=str),
+                    ],
+                    output=ToolOutputSpec(value_type=list[str]),
                     notes="Useful for building valid filter predicates.",
                 ),
             ),

@@ -4,6 +4,8 @@ from .base import (
     BrontoAgent,
     BrontoAgentRegistry,
     ToolExecutionSpec,
+    ToolInputSpec,
+    ToolOutputSpec,
 )
 from .registry import create_default_agent_registry
 from .search import SearchAgent
@@ -16,6 +18,8 @@ __all__ = [
     "BrontoAgent",
     "BrontoAgentRegistry",
     "ToolExecutionSpec",
+    "ToolInputSpec",
+    "ToolOutputSpec",
     "SearchAgent",
     "DatasetsAgent",
     "StatementIdsAgent",

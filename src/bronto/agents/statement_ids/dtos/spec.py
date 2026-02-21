@@ -1,6 +1,12 @@
 from pydantic import BaseModel, Field
 
-from ...base import AgentKind, AgentToolSpec, ToolExecutionSpec
+from ...base import (
+    AgentKind,
+    AgentToolSpec,
+    ToolExecutionSpec,
+    ToolInputSpec,
+    ToolOutputSpec,
+)
 from ..enums import StatementIdsToolHandler, StatementIdsToolName
 
 
@@ -16,8 +22,7 @@ class StatementIdsAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="Generate a random 16-character statement ID.",
                 execution=ToolExecutionSpec(
-                    required_inputs=[],
-                    expected_output="str",
+                    output=ToolOutputSpec(value_type=str),
                     notes="Use when injecting statement IDs into log statements.",
                 ),
             ),
@@ -27,13 +32,13 @@ class StatementIdsAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="Deploy a CSV mapping of statement IDs and log statements to Bronto.",
                 execution=ToolExecutionSpec(
-                    required_inputs=[
-                        "csv_file_path",
-                        "project_id",
-                        "version",
-                        "repo_url",
+                    inputs=[
+                        ToolInputSpec(name="csv_file_path", value_type=str),
+                        ToolInputSpec(name="project_id", value_type=str),
+                        ToolInputSpec(name="version", value_type=str),
+                        ToolInputSpec(name="repo_url", value_type=str),
                     ],
-                    expected_output="Dict",
+                    output=ToolOutputSpec(value_type=dict[str, bool]),
                     notes="Publishes statement metadata for downstream usage.",
                 ),
             ),
@@ -43,8 +48,8 @@ class StatementIdsAgentSpec(BaseModel):
                 kind=AgentKind.PROMPT,
                 description="Prompt template explaining how to inject statement IDs in source files.",
                 execution=ToolExecutionSpec(
-                    required_inputs=["src_path"],
-                    expected_output="str",
+                    inputs=[ToolInputSpec(name="src_path", value_type=str)],
+                    output=ToolOutputSpec(value_type=str),
                     notes="Reference file for statement IDs defaults to statementIds.csv.",
                 ),
             ),
@@ -54,8 +59,14 @@ class StatementIdsAgentSpec(BaseModel):
                 kind=AgentKind.PROMPT,
                 description="Prompt template explaining how to extract statement IDs and write statementIds.csv.",
                 execution=ToolExecutionSpec(
-                    required_inputs=[],
-                    expected_output="str",
+                    inputs=[
+                        ToolInputSpec(
+                            name="stmt_id_filepath",
+                            value_type=str,
+                            required=False,
+                        )
+                    ],
+                    output=ToolOutputSpec(value_type=str),
                     notes="Can override output filename when needed.",
                 ),
             ),
@@ -65,8 +76,15 @@ class StatementIdsAgentSpec(BaseModel):
                 kind=AgentKind.PROMPT,
                 description="Prompt template for updating injected IDs and refreshing statementIds.csv.",
                 execution=ToolExecutionSpec(
-                    required_inputs=["src_path"],
-                    expected_output="str",
+                    inputs=[
+                        ToolInputSpec(name="src_path", value_type=str),
+                        ToolInputSpec(
+                            name="stmt_id_filepath",
+                            value_type=str,
+                            required=False,
+                        ),
+                    ],
+                    output=ToolOutputSpec(value_type=str),
                     notes="Combines inject and extract guidance.",
                 ),
             ),

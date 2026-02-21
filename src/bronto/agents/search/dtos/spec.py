@@ -1,6 +1,14 @@
 from pydantic import BaseModel, Field
 
-from ...base import AgentKind, AgentToolSpec, ToolExecutionSpec
+from models import LogEvent, Timeseries
+
+from ...base import (
+    AgentKind,
+    AgentToolSpec,
+    ToolExecutionSpec,
+    ToolInputSpec,
+    ToolOutputSpec,
+)
 from ..enums import SearchToolHandler, SearchToolName
 
 
@@ -18,8 +26,27 @@ class SearchAgentSpec(BaseModel):
                     "Search log events from selected dataset IDs and time range, with optional SQL-like filter."
                 ),
                 execution=ToolExecutionSpec(
-                    required_inputs=["log_ids"],
-                    expected_output="List[LogEvent]",
+                    inputs=[
+                        ToolInputSpec(
+                            name="timerange_start",
+                            value_type=int,
+                            required=False,
+                        ),
+                        ToolInputSpec(
+                            name="timerange_end",
+                            value_type=int,
+                            required=False,
+                        ),
+                        ToolInputSpec(name="log_ids", value_type=list[str]),
+                        ToolInputSpec(
+                            name="search_filter",
+                            value_type=str,
+                            required=False,
+                        ),
+                    ],
+                    output=ToolOutputSpec(
+                        value_type=list[LogEvent],
+                    ),
                     notes="Use for raw event retrieval in Bronto.",
                 ),
             ),
@@ -31,8 +58,35 @@ class SearchAgentSpec(BaseModel):
                     "Compute metrics such as AVG, MIN, MAX, COUNT, SUM over log data and group keys."
                 ),
                 execution=ToolExecutionSpec(
-                    required_inputs=["log_ids", "metric_functions"],
-                    expected_output="Dict[str, Timeseries]",
+                    inputs=[
+                        ToolInputSpec(
+                            name="timerange_start",
+                            value_type=int,
+                            required=False,
+                        ),
+                        ToolInputSpec(
+                            name="timerange_end",
+                            value_type=int,
+                            required=False,
+                        ),
+                        ToolInputSpec(name="log_ids", value_type=list[str]),
+                        ToolInputSpec(
+                            name="metric_functions", value_type=list[str]
+                        ),
+                        ToolInputSpec(
+                            name="search_filter",
+                            value_type=str,
+                            required=False,
+                        ),
+                        ToolInputSpec(
+                            name="group_by_keys",
+                            value_type=list[str],
+                            required=False,
+                        ),
+                    ],
+                    output=ToolOutputSpec(
+                        value_type=dict[str, Timeseries],
+                    ),
                     notes="Useful when trend or aggregation is needed.",
                 ),
             ),
@@ -42,8 +96,8 @@ class SearchAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="Convert a timestamp in YYYY-MM-DD HH:mm:ss to unix epoch milliseconds.",
                 execution=ToolExecutionSpec(
-                    required_inputs=["input_time"],
-                    expected_output="int",
+                    inputs=[ToolInputSpec(name="input_time", value_type=str)],
+                    output=ToolOutputSpec(value_type=int),
                     notes="Timezone is expected to be UTC.",
                 ),
             ),
@@ -53,8 +107,7 @@ class SearchAgentSpec(BaseModel):
                 kind=AgentKind.TOOL,
                 description="Return current time in YYYY-MM-DD HH:mm:ss.",
                 execution=ToolExecutionSpec(
-                    required_inputs=[],
-                    expected_output="str",
+                    output=ToolOutputSpec(value_type=str),
                     notes="Use when callers need current wall-clock reference.",
                 ),
             ),

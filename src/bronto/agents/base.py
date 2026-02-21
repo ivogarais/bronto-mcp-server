@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Iterable
+from typing import Any, Iterable
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class AgentKind(str, Enum):
@@ -9,15 +9,44 @@ class AgentKind(str, Enum):
     PROMPT = "prompt"
 
 
+class ToolInputSpec(BaseModel):
+    name: str = Field(description="Input argument name exposed by the tool")
+    value_type: Any = Field(
+        default=Any, description="Python type accepted for this input argument"
+    )
+    required: bool = Field(default=True)
+    description: str = Field(default="")
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @model_validator(mode="after")
+    def validate_payload(self) -> "ToolInputSpec":
+        if not self.name:
+            raise ValueError("execution.inputs[].name must be set")
+        return self
+
+
+class ToolOutputSpec(BaseModel):
+    value_type: Any = Field(default=Any, description="Python type returned by the tool")
+    description: str = Field(default="")
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
 class ToolExecutionSpec(BaseModel):
-    required_inputs: list[str] = Field(default_factory=list)
-    expected_output: str = Field(default="")
+    inputs: list[ToolInputSpec] = Field(default_factory=list)
+    output: ToolOutputSpec = Field(default_factory=ToolOutputSpec)
     notes: str = Field(default="")
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @model_validator(mode="after")
     def validate_payload(self) -> "ToolExecutionSpec":
-        if not self.expected_output:
-            raise ValueError("execution.expected_output must be set")
+        known_inputs: set[str] = set()
+        for input_spec in self.inputs:
+            if input_spec.name in known_inputs:
+                raise ValueError(f"execution.inputs contains duplicate input: {input_spec.name}")
+            known_inputs.add(input_spec.name)
         return self
 
 
