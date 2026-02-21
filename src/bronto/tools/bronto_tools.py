@@ -33,7 +33,9 @@ class BrontoTools:
             if tool_spec.kind == "prompt":
                 mcp.prompt(name=tool_spec.name)(handler)
             else:
-                mcp.tool(name=tool_spec.name)(handler)
+                mcp.tool(name=tool_spec.name, description=tool_spec.description)(
+                    handler
+                )
 
     def search_logs(
         self,

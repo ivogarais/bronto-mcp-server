@@ -1,6 +1,18 @@
 from typing import Iterable, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+
+class ToolExecutionSpec(BaseModel):
+    required_inputs: list[str] = Field(default_factory=list)
+    expected_output: str = Field(default="")
+    notes: str = Field(default="")
+
+    @model_validator(mode="after")
+    def validate_payload(self) -> "ToolExecutionSpec":
+        if not self.expected_output:
+            raise ValueError("execution.expected_output must be set")
+        return self
 
 
 class AgentToolSpec(BaseModel):
@@ -9,6 +21,10 @@ class AgentToolSpec(BaseModel):
         description="Method name on BrontoTools that implements this spec"
     )
     kind: Literal["tool", "prompt"] = Field(default="tool")
+    description: str = Field(description="LLM-facing tool description")
+    execution: ToolExecutionSpec = Field(
+        description="Execution contract used for validation and discovery"
+    )
 
 
 class BrontoAgent(BaseModel):
@@ -32,4 +48,6 @@ class BrontoAgentRegistry(BaseModel):
         ]
         for agent in self.agents:
             lines.append(f"- {agent.name}: {agent.description}")
+            for tool in agent.tools:
+                lines.append(f"  - {tool.name}: {tool.description}")
         return "\n".join(lines)
