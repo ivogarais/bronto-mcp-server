@@ -2,7 +2,8 @@ import urllib.request
 import logging
 import os
 import json
-from typing import List, Dict, Optional
+import csv
+from typing import List, Dict, Optional, Annotated
 from urllib.error import HTTPError
 
 from models import DatasetKey, LogEvent
@@ -24,7 +25,7 @@ class BrontoResponseException(Exception):
 
 class BrontoClient:
 
-    def __init__(self, api_key, api_endpoint):
+    def __init__(self, api_key: str, api_endpoint: str):
         self.api_key = api_key
         self.api_endpoint = api_endpoint
         self.headers = {
@@ -318,3 +319,143 @@ class BrontoClient:
                 result.append(DatasetKey(name=key, values=top_keys[key]))
                 processed_keys.add(key)
         return result
+
+
+    @staticmethod
+    def _read_statement_ids_csv(csv_file_path):
+        """
+        Read the statement IDs CSV file and return a dictionary.
+
+        Args:
+            csv_file_path (str): Path to the CSV file
+
+        Returns:
+            dict: Dictionary with statement_id as key and log_statement as value
+        """
+        statement_ids = {}
+
+        try:
+            with (open(csv_file_path, 'r', encoding='utf-8') as file):
+                csv_reader = csv.DictReader(file)
+                for row in csv_reader:
+                    statement_id = row['statement_id'].strip()
+                    log_statement = row['log_statement'].strip()
+                    file_path = row['file_path']
+                    line_number = row['line_number']
+
+                    # Remove surrounding quotes if they exist (from CSV parsing)
+                    if log_statement.startswith('"') and log_statement.endswith('"'):
+                        log_statement = log_statement[1:-1]
+
+                    if statement_id.startswith('"') and statement_id.endswith('"'):
+                        statement_id = statement_id[1:-1]
+
+                    if file_path.startswith('"') and file_path.endswith('"'):
+                        file_path = file_path[1:-1]
+
+                    if line_number.startswith('"') and line_number.endswith('"'):
+                        line_number = line_number[1:-1]
+                    try:
+                        line_number = int(line_number)
+                    except ValueError as _:
+                        line_number = -1
+
+                    # Handle escaped quotes within the log statement
+                    log_statement = log_statement.replace('""', '"')
+
+                    statement_ids[statement_id] = {
+                        'stmt_id': statement_id,
+                        'log_statement': log_statement,
+                        'file_path': file_path,
+                        'line_number': line_number
+                    }
+
+            return statement_ids
+
+        except FileNotFoundError:
+            print(f"Error: CSV file not found at {csv_file_path}")
+            return None
+        except Exception as e:
+            print(f"Error reading CSV file: {e}")
+            return None
+
+
+    @staticmethod
+    def create_payload(statement_ids_dict, project_id, version, repo_url):
+        """
+        Create the JSON payload in the required format.
+        """
+        return {
+            "project_id": project_id,
+            "version": version,
+            "repo_url": repo_url,
+            "statements": [{"id": stmt_id, "message": stmt.get('log_statement'), "file": stmt.get('file_path'),
+                            "line": stmt.get('line_number')} for stmt_id, stmt in statement_ids_dict.items()]
+        }
+
+    def post_statement_ids(self, payload) -> bool:
+        """
+        POST the statement IDs to the API endpoint.
+        """
+        try:
+            headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'x-bronto-api-key': self.api_key
+            }
+            # Convert payload to JSON string (this will handle quote escaping automatically)
+            json_payload = json.dumps(payload, ensure_ascii=False, indent=2)
+
+            stmt_endpoint = self.api_endpoint + ('' if self.api_endpoint.endswith('/') else '/') + 'statements'
+
+            print(f"Posting to: {stmt_endpoint}")
+
+            # Encode the JSON payload as bytes
+            data = json_payload.encode('utf-8')
+
+            # Create the request object
+            request = urllib.request.Request(stmt_endpoint, data=data, headers=headers, method='POST')
+
+            # Make the request
+            with urllib.request.urlopen(request, timeout=30) as response:
+                status_code = response.getcode()
+                response_headers = dict(response.headers)
+                response_data = response.read().decode('utf-8')
+
+            print(f"Response Status Code: {status_code}")
+            print(f"Response Headers: {response_headers}")
+
+            if status_code == 200 or status_code == 201:
+                print("✅ Successfully posted statement IDs to API")
+                try:
+                    response_json = json.loads(response_data)
+                    print(f"Response: {json.dumps(response_json, indent=2)}")
+                except json.JSONDecodeError:
+                    print(f"Response Text: {response_data}")
+                return True
+            else:
+                print(f"❌ Failed to post statement IDs. Status: {status_code}")
+                print(f"Response: {response_data}")
+                return False
+
+        except urllib.error.HTTPError as e:
+            print(f"❌ HTTP Error {e.code}: {e.reason}")
+            try:
+                error_response = e.read().decode('utf-8')
+                print(f"Error Response: {error_response}")
+            except:
+                pass
+            return False
+        except urllib.error.URLError as e:
+            print(f"❌ URL Error: {e.reason}")
+            return False
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
+            return False
+
+    def deploy_statements(self, csv_file_path, project_id, version, repo_url) -> Dict:
+        stmt_ids = self._read_statement_ids_csv(csv_file_path)
+        payload = self.create_payload(stmt_ids, project_id, version, repo_url)
+        return {
+            'success': self.post_statement_ids(payload)
+        }
