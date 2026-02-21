@@ -12,9 +12,7 @@ def _resolve_level(level: str | int | None) -> int:
     if isinstance(level, int):
         return level
 
-    raw_value = (
-        level if level is not None else os.getenv("BRONTO_LOG_LEVEL", DEFAULT_LEVEL)
-    )
+    raw_value = level if level is not None else os.getenv("BRONTO_LOG_LEVEL", DEFAULT_LEVEL)
     normalized = str(raw_value).strip().upper()
 
     if normalized.isdigit():
@@ -41,7 +39,7 @@ def bootstrap_logging(level: str | int | None = None, force: bool = False) -> No
         fmt=os.getenv("BRONTO_LOG_FORMAT", DEFAULT_FORMAT),
         datefmt=os.getenv("BRONTO_LOG_DATE_FORMAT", DEFAULT_DATE_FORMAT),
     )
-    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler = logging.StreamHandler(sys.stderr)
     stream_handler.setLevel(target_level)
     stream_handler.setFormatter(formatter)
 

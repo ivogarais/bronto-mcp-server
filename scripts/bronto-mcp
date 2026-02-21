@@ -13,14 +13,14 @@ fi
 cd "$REPO_ROOT"
 export BRONTO_MCP_TRANSPORT="${BRONTO_MCP_TRANSPORT:-stdio}"
 
+if [ -x "$REPO_ROOT/.venv/bin/python" ]; then
+  exec "$REPO_ROOT/.venv/bin/python" -m bronto
+fi
+
 if command -v uv >/dev/null 2>&1; then
   exec uv run bronto-mcp
 fi
 
-if [ ! -x "$REPO_ROOT/.venv/bin/python" ]; then
-  echo "No uv binary and no $REPO_ROOT/.venv/bin/python found."
-  echo "Install dependencies first (./install.sh claude|codex|all)."
-  exit 1
-fi
-
-exec "$REPO_ROOT/.venv/bin/python" -m bronto.server
+echo "No $REPO_ROOT/.venv/bin/python found and uv is not available."
+echo "Install dependencies first (./install.sh claude|codex|all)."
+exit 1
