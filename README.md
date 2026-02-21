@@ -36,7 +36,7 @@ uv run bronto-mcp
 
 To run tests and coverage:
 ```shell
-./test.sh
+make test
 ```
 
 This MCP server should work with any agent that supports MCP. However, it has only been tested with Claude Code.

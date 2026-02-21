@@ -27,4 +27,4 @@ jobs:
           python-version: '3.12'
 
       - name: Test
-        run: ./test.sh
+        run: make test
