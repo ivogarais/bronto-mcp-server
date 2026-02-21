@@ -23,15 +23,30 @@ This MCP server is configured using environment variables:
 
 - `BRONTO_API_KEY`: a Bronto API key
 - `BRONTO_API_ENDPOINT`: a Bronto API endpoint, e.g. https://api.eu.staging.bronto.io
+- `BRONTO_MCP_TRANSPORT`: MCP transport mode (`stdio` or `streamable-http`). Defaults to `stdio`.
+- `BRONTO_MCP_HOST`: host used for HTTP transport. Defaults to `127.0.0.1`.
+- `BRONTO_MCP_PORT`: port used for HTTP transport. Defaults to `8000`.
+- `BRONTO_MCP_STREAMABLE_HTTP_PATH`: HTTP path used for streamable HTTP mode. Defaults to `/`.
 
 
 ## Usage
 
-To run the mcp server from the root of this project, you can use the following command:
+To run the MCP server in local `stdio` mode (recommended default for broad client compatibility):
 ```shell
 BRONTO_API_KEY=<API KEY HERE> \
 BRONTO_API_ENDPOINT=https://api.eu.bronto.io \
-uv run bronto-mcp
+make run
+```
+
+To run the MCP server in `streamable-http` mode:
+```shell
+BRONTO_API_KEY=<API KEY HERE> \
+BRONTO_API_ENDPOINT=https://api.eu.bronto.io \
+BRONTO_MCP_TRANSPORT=streamable-http \
+BRONTO_MCP_HOST=127.0.0.1 \
+BRONTO_MCP_PORT=8000 \
+BRONTO_MCP_STREAMABLE_HTTP_PATH=/ \
+make run-http
 ```
 
 To run tests and coverage:
@@ -41,7 +56,7 @@ make test
 
 This MCP server should work with any agent that supports MCP. However, it has only been tested with Claude Code.
 
-Finally, in order to configure Claude Code so that it uses the Bronto MCP server, simply run 
+Finally, in order to configure Claude Code so that it uses the Bronto MCP server in HTTP mode, simply run 
 ```json
 claude mcp add --transport http bronto http://localhost:8000
 ```
