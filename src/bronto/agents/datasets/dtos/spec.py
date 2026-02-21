@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from models import Dataset
+from schemas import Dataset
 
 from ...base import (
     AgentKind,

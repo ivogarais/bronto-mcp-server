@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 from logger import module_logger
-from models import DatasetKey, LogEvent
+from schemas import DatasetKey, LogEvent
 
 logger = module_logger(__name__)
 

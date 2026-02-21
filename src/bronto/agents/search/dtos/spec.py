@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from models import LogEvent, Timeseries
+from schemas import LogEvent, Timeseries
 
 from ...base import (
     AgentKind,

@@ -3,7 +3,7 @@ from typing import Dict, List
 from pydantic import Field
 from typing_extensions import Annotated
 
-from models import Dataset
+from schemas import Dataset
 
 
 class DatasetsToolHandlers:

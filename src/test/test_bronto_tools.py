@@ -5,7 +5,7 @@ from unittest.mock import Mock
 
 from agents import build_agent_registry
 from tools import BrontoTools
-from models import Datapoint, Timeseries, LogEvent
+from schemas import Datapoint, Timeseries, LogEvent
 from clients import BrontoClient
 
 
