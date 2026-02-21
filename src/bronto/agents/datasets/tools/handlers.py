@@ -38,14 +38,10 @@ class DatasetsToolHandlers:
 
     def get_datasets_by_name(
         self,
-        dataset_name: Annotated[
-            str, Field(description="The dataset name", min_length=1)
-        ],
+        dataset_name: Annotated[str, Field(description="The dataset name", min_length=1)],
         collection_name: Annotated[
             str,
-            Field(
-                description="The collection that the dataset is part of", min_length=1
-            ),
+            Field(description="The collection that the dataset is part of", min_length=1),
         ],
     ) -> Annotated[
         List[Dataset],
@@ -116,9 +112,5 @@ class DatasetsToolHandlers:
             "dataset."
         ),
     ]:
-        datasets_top_keys_and_values = (
-            self.bronto_client.get_all_datasets_top_keys_and_values()
-        )
-        keys_and_values = datasets_top_keys_and_values.get(log_id, {})
-        key_and_values = keys_and_values.get(key, {})
-        return key_and_values.get("values", {}).get(key, [])
+        dataset_top_keys = self.bronto_client.get_top_keys(log_id)
+        return dataset_top_keys.get(key, [])

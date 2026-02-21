@@ -100,6 +100,27 @@ def test_get_dataset_keys(monkeypatch):
     assert "key2" in keys
 
 
+def test_get_key_values(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_top_keys.return_value = {
+        "service": ["api", "worker"],
+        "agent.name": ["codex"],
+    }
+
+    values = bronto_tools.get_key_values("service", "test_log_id")
+
+    mock_bronto_client.get_top_keys.assert_called_once_with("test_log_id")
+    assert values == ["api", "worker"]
+
+
+def test_get_key_values_missing_key_returns_empty_list(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_top_keys.return_value = {"service": ["api", "worker"]}
+
+    values = bronto_tools.get_key_values("missing", "test_log_id")
+
+    mock_bronto_client.get_top_keys.assert_called_once_with("test_log_id")
+    assert values == []
+
+
 def test_search_logs(bronto_tools, mock_bronto_client):
     log_event1 = LogEvent(message="test_event1", attributes={"key1": "value1"})
     log_event2 = LogEvent(message="test_event2", attributes={"key2": "value2"})
