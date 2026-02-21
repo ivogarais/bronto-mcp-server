@@ -49,8 +49,12 @@ terraform.rc
 # Pytest
 **/__pycache__/
 
+# VS Code local workspace settings
+.vscode/settings.json
+
 # Python virtual envs
 **/env/
+**/.venv/
 test_env/
 
 # Coverage
