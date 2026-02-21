@@ -1,7 +1,7 @@
 from .base import BrontoAgentRegistry
-from .datasets_agent import DatasetsAgent
-from .search_agent import SearchAgent
-from .statement_ids_agent import StatementIdsAgent
+from .datasets import DatasetsAgent
+from .search import SearchAgent
+from .statement_ids import StatementIdsAgent
 
 
 def create_default_agent_registry() -> BrontoAgentRegistry:
