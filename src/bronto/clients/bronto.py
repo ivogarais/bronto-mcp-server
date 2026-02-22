@@ -131,6 +131,222 @@ class BrontoClient:
         )
         return datasets_payload.get("logs", [])
 
+    def list_api_keys(self) -> List[Dict[str, Any]]:
+        response = self._request(
+            "GET",
+            "/api-keys",
+            action="API key retrieval",
+            failure_message="Cannot retrieve API keys from Bronto",
+        )
+        payload = self._decode_json_response(
+            response,
+            error_log_message="Cannot decode API key retrieval response",
+            decoding_error_message="Unexpected format for retrieved API keys",
+        )
+        return payload.get("api_keys", [])
+
+    def list_users(self) -> List[Dict[str, Any]]:
+        response = self._request(
+            "GET",
+            "/users",
+            action="User retrieval",
+            failure_message="Cannot retrieve users from Bronto",
+        )
+        payload = self._decode_json_response(
+            response,
+            error_log_message="Cannot decode user retrieval response",
+            decoding_error_message="Unexpected format for retrieved users",
+        )
+        return payload.get("users", [])
+
+    def get_context(
+        self,
+        *,
+        from_: str | None = None,
+        from_tags: str | None = None,
+        from_expr: str | None = None,
+        sequence: int | None = None,
+        timestamp: int | None = None,
+        direction: str | None = None,
+        limit: int | None = None,
+        include_explain: bool | None = None,
+    ) -> Dict[str, Any]:
+        params: Dict[str, Any] = {}
+        if from_ is not None:
+            params["from"] = from_
+        if from_tags is not None:
+            params["from_tags"] = from_tags
+        if from_expr is not None:
+            params["from_expr"] = from_expr
+        if sequence is not None:
+            params["sequence"] = sequence
+        if timestamp is not None:
+            params["timestamp"] = timestamp
+        if direction is not None:
+            params["direction"] = direction
+        if limit is not None:
+            params["limit"] = limit
+        if include_explain is not None:
+            params["explain"] = include_explain
+
+        response = self._request(
+            "GET",
+            "/context",
+            params=params,
+            action="Context retrieval",
+            failure_message="Cannot retrieve context from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode context retrieval response",
+            decoding_error_message="Unexpected format for retrieved context",
+        )
+
+    def list_exports(self) -> List[Dict[str, Any]]:
+        response = self._request(
+            "GET",
+            "/exports",
+            action="Export retrieval",
+            failure_message="Cannot retrieve exports from Bronto",
+        )
+        payload = self._decode_json_response(
+            response,
+            error_log_message="Cannot decode export retrieval response",
+            decoding_error_message="Unexpected format for retrieved exports",
+        )
+        return payload.get("exports", [])
+
+    def get_export(self, export_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            f"/exports/{export_id}",
+            action="Export retrieval by ID",
+            failure_message="Cannot retrieve export from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode export retrieval-by-id response",
+            decoding_error_message="Unexpected format for retrieved export",
+        )
+
+    def get_usage_for_log_id(
+        self,
+        *,
+        time_range: str | None = None,
+        from_ts: int | None = None,
+        to_ts: int | None = None,
+        usage_type: str | None = None,
+        limit: int | None = None,
+        num_of_slices: int | None = None,
+        metric: str | None = None,
+        delta: bool | None = None,
+        delta_time_range: str | None = None,
+        delta_from_ts: int | None = None,
+        delta_to_ts: int | None = None,
+    ) -> Dict[str, Any]:
+        params: Dict[str, Any] = {}
+        if time_range is not None:
+            params["time_range"] = time_range
+        if from_ts is not None:
+            params["from_ts"] = from_ts
+        if to_ts is not None:
+            params["to_ts"] = to_ts
+        if usage_type is not None:
+            params["usage_type"] = usage_type
+        if limit is not None:
+            params["limit"] = limit
+        if num_of_slices is not None:
+            params["num_of_slices"] = num_of_slices
+        if metric is not None:
+            params["metric"] = metric
+        if delta is not None:
+            params["delta"] = delta
+        if delta_time_range is not None:
+            params["delta_time_range"] = delta_time_range
+        if delta_from_ts is not None:
+            params["delta_from_ts"] = delta_from_ts
+        if delta_to_ts is not None:
+            params["delta_to_ts"] = delta_to_ts
+
+        response = self._request(
+            "GET",
+            "/usage/organizations/logs",
+            params=params,
+            action="Usage retrieval by log ID",
+            failure_message="Cannot retrieve usage from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode usage-by-log-id response",
+            decoding_error_message="Unexpected format for retrieved usage",
+        )
+
+    def get_usage_for_user_per_log_id(
+        self,
+        *,
+        time_range: str | None = None,
+        from_ts: int | None = None,
+        to_ts: int | None = None,
+        usage_type: str | None = None,
+        limit: int | None = None,
+        num_of_slices: int | None = None,
+        metric: str | None = None,
+        delta: bool | None = None,
+        delta_time_range: str | None = None,
+        delta_from_ts: int | None = None,
+        delta_to_ts: int | None = None,
+    ) -> Dict[str, Any]:
+        params: Dict[str, Any] = {}
+        if time_range is not None:
+            params["time_range"] = time_range
+        if from_ts is not None:
+            params["from_ts"] = from_ts
+        if to_ts is not None:
+            params["to_ts"] = to_ts
+        if usage_type is not None:
+            params["usage_type"] = usage_type
+        if limit is not None:
+            params["limit"] = limit
+        if num_of_slices is not None:
+            params["num_of_slices"] = num_of_slices
+        if metric is not None:
+            params["metric"] = metric
+        if delta is not None:
+            params["delta"] = delta
+        if delta_time_range is not None:
+            params["delta_time_range"] = delta_time_range
+        if delta_from_ts is not None:
+            params["delta_from_ts"] = delta_from_ts
+        if delta_to_ts is not None:
+            params["delta_to_ts"] = delta_to_ts
+
+        response = self._request(
+            "GET",
+            "/usage/users",
+            params=params,
+            action="Usage retrieval by user per log ID",
+            failure_message="Cannot retrieve usage from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode usage-by-user-per-log-id response",
+            decoding_error_message="Unexpected format for retrieved usage",
+        )
+
+    def list_forward_configs(self) -> List[Dict[str, Any]]:
+        response = self._request(
+            "GET",
+            "/forward-configs",
+            action="Forward config retrieval",
+            failure_message="Cannot retrieve forward configs from Bronto",
+        )
+        payload = self._decode_json_response(
+            response,
+            error_log_message="Cannot decode forward config retrieval response",
+            decoding_error_message="Unexpected format for retrieved forward configs",
+        )
+        return payload.get("forward_configs", [])
+
     def search(
         self,
         timestamp_start: int,

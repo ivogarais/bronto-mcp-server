@@ -6,7 +6,14 @@ from unittest.mock import Mock
 from bronto.agents import build_agent_registry
 from bronto.clients import BrontoClient
 from bronto.runtime import BrontoRuntime
-from bronto.schemas import Datapoint, LogEvent, Timeseries
+from bronto.schemas import (
+    ContextQueryInput,
+    Datapoint,
+    ExportByIdInput,
+    LogEvent,
+    Timeseries,
+    UsageQueryInput,
+)
 
 
 @pytest.fixture
@@ -293,3 +300,151 @@ def test_compute_metrics_group_by_keys_csv_string_is_split(
         "event.status",
         "event.type",
     ]
+
+
+def test_list_api_keys(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_api_keys.return_value = [{"id": "k1", "name": "prod"}]
+
+    result = bronto_tools.list_api_keys()
+
+    mock_bronto_client.list_api_keys.assert_called_once_with()
+    assert result == [{"id": "k1", "name": "prod"}]
+
+
+def test_list_users(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_users.return_value = [{"id": "u1", "email": "a@b.c"}]
+
+    result = bronto_tools.list_users()
+
+    mock_bronto_client.list_users.assert_called_once_with()
+    assert result == [{"id": "u1", "email": "a@b.c"}]
+
+
+def test_get_context_forwards_named_arguments(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_context.return_value = {"events": []}
+
+    result = bronto_tools.get_context(
+        ContextQueryInput(
+            **{
+                "from": "log_id_1",
+                "from_tags": "environment=prod",
+                "from_expr": "collection='core'",
+                "sequence": 123,
+                "timestamp": 456,
+                "direction": "both",
+                "limit": 50,
+                "explain": True,
+            }
+        )
+    )
+
+    mock_bronto_client.get_context.assert_called_once_with(
+        from_="log_id_1",
+        from_tags="environment=prod",
+        from_expr="collection='core'",
+        sequence=123,
+        timestamp=456,
+        direction="both",
+        limit=50,
+        include_explain=True,
+    )
+    assert result == {"events": []}
+
+
+def test_list_exports(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_exports.return_value = [{"export_id": "exp1"}]
+
+    result = bronto_tools.list_exports()
+
+    mock_bronto_client.list_exports.assert_called_once_with()
+    assert result == [{"export_id": "exp1"}]
+
+
+def test_get_export(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_export.return_value = {"export_id": "exp1", "status": "DONE"}
+
+    result = bronto_tools.get_export(ExportByIdInput(export_id="exp1"))
+
+    mock_bronto_client.get_export.assert_called_once_with("exp1")
+    assert result["status"] == "DONE"
+
+
+def test_get_usage_for_log_id_forwards_named_arguments(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_usage_for_log_id.return_value = {"rows": []}
+
+    result = bronto_tools.get_usage_for_log_id(
+        UsageQueryInput(
+            time_range="24h",
+            from_ts=1000,
+            to_ts=2000,
+            usage_type="search",
+            limit=25,
+            num_of_slices=10,
+            metric="bytes_total",
+            delta=True,
+            delta_time_range="24h",
+            delta_from_ts=1,
+            delta_to_ts=2,
+        )
+    )
+
+    mock_bronto_client.get_usage_for_log_id.assert_called_once_with(
+        time_range="24h",
+        from_ts=1000,
+        to_ts=2000,
+        usage_type="search",
+        limit=25,
+        num_of_slices=10,
+        metric="bytes_total",
+        delta=True,
+        delta_time_range="24h",
+        delta_from_ts=1,
+        delta_to_ts=2,
+    )
+    assert result == {"rows": []}
+
+
+def test_get_usage_for_user_per_log_id_forwards_named_arguments(
+    bronto_tools, mock_bronto_client
+):
+    mock_bronto_client.get_usage_for_user_per_log_id.return_value = {"rows": []}
+
+    result = bronto_tools.get_usage_for_user_per_log_id(
+        UsageQueryInput(
+            time_range="24h",
+            from_ts=1000,
+            to_ts=2000,
+            usage_type="ingestion",
+            limit=25,
+            num_of_slices=10,
+            metric="event_count",
+            delta=False,
+            delta_time_range="24h",
+            delta_from_ts=1,
+            delta_to_ts=2,
+        )
+    )
+
+    mock_bronto_client.get_usage_for_user_per_log_id.assert_called_once_with(
+        time_range="24h",
+        from_ts=1000,
+        to_ts=2000,
+        usage_type="ingestion",
+        limit=25,
+        num_of_slices=10,
+        metric="event_count",
+        delta=False,
+        delta_time_range="24h",
+        delta_from_ts=1,
+        delta_to_ts=2,
+    )
+    assert result == {"rows": []}
+
+
+def test_list_forward_configs(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_forward_configs.return_value = [{"id": "fwd-1"}]
+
+    result = bronto_tools.list_forward_configs()
+
+    mock_bronto_client.list_forward_configs.assert_called_once_with()
+    assert result == [{"id": "fwd-1"}]
