@@ -7,20 +7,38 @@ from bronto.agents import build_agent_registry
 from bronto.clients import BrontoClient
 from bronto.runtime import BrontoRuntime
 from bronto.schemas import (
+    AccessCheckInput,
+    AccessGrantInput,
+    AccessRevokeInput,
+    AccessSwitchInput,
     ApiKeyByIdInput,
     ApiKeyCreateInput,
     ApiKeyUpdateInput,
     ContextQueryInput,
     Datapoint,
+    EncryptionKeyByIdInput,
+    EncryptionKeyCreateInput,
+    EncryptionKeyUpdateInput,
     ExportByIdInput,
     ExportCreateInput,
     ForwardConfigCreateInput,
     ForwardConfigDeleteInput,
     ForwardConfigTestInput,
     ForwardConfigUpdateInput,
+    GroupByIdInput,
+    GroupCreateInput,
+    GroupMemberUpdateInput,
+    GroupUpdateInput,
+    LogByIdInput,
     LogCreateInput,
     LogEvent,
+    MemberByIdInput,
+    ParsersUsageQueryInput,
+    PolicyByResourceInput,
     SearchStatusInput,
+    TagByNameInput,
+    TagCreateInput,
+    TagUpdateInput,
     Timeseries,
     UserByIdInput,
     UserCreateInput,
@@ -703,4 +721,238 @@ def test_cancel_search(bronto_tools, mock_bronto_client):
     result = bronto_tools.cancel_search(SearchStatusInput(status_id="s1"))
 
     mock_bronto_client.cancel_search.assert_called_once_with("s1")
+    assert result == {"success": True}
+
+
+def test_list_groups(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_groups.return_value = [{"id": "g1"}]
+    result = bronto_tools.list_groups()
+    mock_bronto_client.list_groups.assert_called_once_with()
+    assert result == [{"id": "g1"}]
+
+
+def test_create_group(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_group.return_value = {"id": "g1"}
+    result = bronto_tools.create_group(GroupCreateInput(payload={"name": "ops"}))
+    mock_bronto_client.create_group.assert_called_once_with({"name": "ops"})
+    assert result == {"id": "g1"}
+
+
+def test_get_group(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_group.return_value = {"id": "g1"}
+    result = bronto_tools.get_group(GroupByIdInput(group_id="g1"))
+    mock_bronto_client.get_group.assert_called_once_with("g1")
+    assert result == {"id": "g1"}
+
+
+def test_update_group(bronto_tools, mock_bronto_client):
+    mock_bronto_client.update_group.return_value = {"id": "g1", "name": "eng"}
+    result = bronto_tools.update_group(
+        GroupUpdateInput(group_id="g1", payload={"name": "eng"})
+    )
+    mock_bronto_client.update_group.assert_called_once_with("g1", {"name": "eng"})
+    assert result["name"] == "eng"
+
+
+def test_delete_group(bronto_tools, mock_bronto_client):
+    mock_bronto_client.delete_group.return_value = {"success": True}
+    result = bronto_tools.delete_group(GroupByIdInput(group_id="g1"))
+    mock_bronto_client.delete_group.assert_called_once_with("g1")
+    assert result == {"success": True}
+
+
+def test_list_group_members(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_group_members.return_value = {"members": []}
+    result = bronto_tools.list_group_members(GroupByIdInput(group_id="g1"))
+    mock_bronto_client.list_group_members.assert_called_once_with("g1")
+    assert result == {"members": []}
+
+
+def test_add_group_members(bronto_tools, mock_bronto_client):
+    mock_bronto_client.add_group_members.return_value = {"success": True}
+    result = bronto_tools.add_group_members(
+        GroupMemberUpdateInput(group_id="g1", payload={"members": ["u1"]})
+    )
+    mock_bronto_client.add_group_members.assert_called_once_with(
+        "g1", {"members": ["u1"]}
+    )
+    assert result == {"success": True}
+
+
+def test_remove_group_members(bronto_tools, mock_bronto_client):
+    mock_bronto_client.remove_group_members.return_value = {"success": True}
+    result = bronto_tools.remove_group_members(
+        GroupMemberUpdateInput(group_id="g1", payload={"members": ["u1"]})
+    )
+    mock_bronto_client.remove_group_members.assert_called_once_with(
+        "g1", {"members": ["u1"]}
+    )
+    assert result == {"success": True}
+
+
+def test_list_member_groups(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_member_groups.return_value = {"groups": []}
+    result = bronto_tools.list_member_groups(MemberByIdInput(member_id="u1"))
+    mock_bronto_client.list_member_groups.assert_called_once_with("u1")
+    assert result == {"groups": []}
+
+
+def test_list_monitors_by_log(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_monitors_by_log.return_value = {"monitors": []}
+    result = bronto_tools.list_monitors_by_log(LogByIdInput(log_id="l1"))
+    mock_bronto_client.list_monitors_by_log.assert_called_once_with("l1")
+    assert result == {"monitors": []}
+
+
+def test_list_dashboards_by_log(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_dashboards_by_log.return_value = {"dashboards": []}
+    result = bronto_tools.list_dashboards_by_log(LogByIdInput(log_id="l1"))
+    mock_bronto_client.list_dashboards_by_log.assert_called_once_with("l1")
+    assert result == {"dashboards": []}
+
+
+def test_grant_access(bronto_tools, mock_bronto_client):
+    mock_bronto_client.grant_access.return_value = {"success": True}
+    result = bronto_tools.grant_access(AccessGrantInput(payload={"member_id": "u1"}))
+    mock_bronto_client.grant_access.assert_called_once_with({"member_id": "u1"})
+    assert result == {"success": True}
+
+
+def test_revoke_access(bronto_tools, mock_bronto_client):
+    mock_bronto_client.revoke_access.return_value = {"success": True}
+    result = bronto_tools.revoke_access(AccessRevokeInput(payload={"member_id": "u1"}))
+    mock_bronto_client.revoke_access.assert_called_once_with({"member_id": "u1"})
+    assert result == {"success": True}
+
+
+def test_list_access_members(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_access_members.return_value = {"members": []}
+    result = bronto_tools.list_access_members()
+    mock_bronto_client.list_access_members.assert_called_once_with()
+    assert result == {"members": []}
+
+
+def test_check_access(bronto_tools, mock_bronto_client):
+    mock_bronto_client.check_access.return_value = {"has_access": True}
+    result = bronto_tools.check_access(AccessCheckInput(payload={"member_id": "u1"}))
+    mock_bronto_client.check_access.assert_called_once_with({"member_id": "u1"})
+    assert result == {"has_access": True}
+
+
+def test_switch_active_organization(bronto_tools, mock_bronto_client):
+    mock_bronto_client.switch_active_organization.return_value = {"success": True}
+    result = bronto_tools.switch_active_organization(
+        AccessSwitchInput(payload={"organization_id": "o1"})
+    )
+    mock_bronto_client.switch_active_organization.assert_called_once_with(
+        {"organization_id": "o1"}
+    )
+    assert result == {"success": True}
+
+
+def test_list_tags(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_tags.return_value = {"tags": []}
+    result = bronto_tools.list_tags()
+    mock_bronto_client.list_tags.assert_called_once_with()
+    assert result == {"tags": []}
+
+
+def test_create_tag(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_tag.return_value = {"name": "team"}
+    result = bronto_tools.create_tag(TagCreateInput(payload={"name": "team"}))
+    mock_bronto_client.create_tag.assert_called_once_with({"name": "team"})
+    assert result == {"name": "team"}
+
+
+def test_update_tag(bronto_tools, mock_bronto_client):
+    mock_bronto_client.update_tag.return_value = {"name": "team"}
+    result = bronto_tools.update_tag(
+        TagUpdateInput(tag_name="team", payload={"description": "desc"})
+    )
+    mock_bronto_client.update_tag.assert_called_once_with("team", {"description": "desc"})
+    assert result == {"name": "team"}
+
+
+def test_delete_tag(bronto_tools, mock_bronto_client):
+    mock_bronto_client.delete_tag.return_value = {"success": True}
+    result = bronto_tools.delete_tag(TagByNameInput(tag_name="team"))
+    mock_bronto_client.delete_tag.assert_called_once_with("team")
+    assert result == {"success": True}
+
+
+def test_get_parsers_usage_for_log_id(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_parsers_usage_for_log_id.return_value = {"rows": []}
+    result = bronto_tools.get_parsers_usage_for_log_id(
+        ParsersUsageQueryInput(payload={"log_id": "l1"})
+    )
+    mock_bronto_client.get_parsers_usage_for_log_id.assert_called_once_with(
+        {"log_id": "l1"}
+    )
+    assert result == {"rows": []}
+
+
+def test_get_parsers_usage_for_user_per_log_id(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_parsers_usage_for_user_per_log_id.return_value = {"rows": []}
+    result = bronto_tools.get_parsers_usage_for_user_per_log_id(
+        ParsersUsageQueryInput(payload={"log_id": "l1"})
+    )
+    mock_bronto_client.get_parsers_usage_for_user_per_log_id.assert_called_once_with(
+        {"log_id": "l1"}
+    )
+    assert result == {"rows": []}
+
+
+def test_list_policies_by_resource(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_policies_by_resource.return_value = {"policies": []}
+    result = bronto_tools.list_policies_by_resource(
+        PolicyByResourceInput(payload={"resource_id": "r1"})
+    )
+    mock_bronto_client.list_policies_by_resource.assert_called_once_with(
+        {"resource_id": "r1"}
+    )
+    assert result == {"policies": []}
+
+
+def test_list_encryption_keys(bronto_tools, mock_bronto_client):
+    mock_bronto_client.list_encryption_keys.return_value = [{"id": "k1"}]
+    result = bronto_tools.list_encryption_keys()
+    mock_bronto_client.list_encryption_keys.assert_called_once_with()
+    assert result == [{"id": "k1"}]
+
+
+def test_create_encryption_key(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_encryption_key.return_value = {"id": "k1"}
+    result = bronto_tools.create_encryption_key(
+        EncryptionKeyCreateInput(payload={"name": "kms"})
+    )
+    mock_bronto_client.create_encryption_key.assert_called_once_with({"name": "kms"})
+    assert result == {"id": "k1"}
+
+
+def test_get_encryption_key(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_encryption_key.return_value = {"id": "k1"}
+    result = bronto_tools.get_encryption_key(
+        EncryptionKeyByIdInput(encryption_key_id="k1")
+    )
+    mock_bronto_client.get_encryption_key.assert_called_once_with("k1")
+    assert result == {"id": "k1"}
+
+
+def test_update_encryption_key(bronto_tools, mock_bronto_client):
+    mock_bronto_client.update_encryption_key.return_value = {"id": "k1", "enabled": True}
+    result = bronto_tools.update_encryption_key(
+        EncryptionKeyUpdateInput(encryption_key_id="k1", payload={"enabled": True})
+    )
+    mock_bronto_client.update_encryption_key.assert_called_once_with(
+        "k1", {"enabled": True}
+    )
+    assert result["enabled"] is True
+
+
+def test_delete_encryption_key(bronto_tools, mock_bronto_client):
+    mock_bronto_client.delete_encryption_key.return_value = {"success": True}
+    result = bronto_tools.delete_encryption_key(
+        EncryptionKeyByIdInput(encryption_key_id="k1")
+    )
+    mock_bronto_client.delete_encryption_key.assert_called_once_with("k1")
     assert result == {"success": True}

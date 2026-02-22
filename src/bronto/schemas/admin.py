@@ -210,3 +210,119 @@ class SearchStatusInput(BaseModel):
     status_id: str = Field(
         min_length=1, description="Search status ID returned by async search execution."
     )
+
+
+class GroupByIdInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    group_id: str = Field(min_length=1, description="Group ID.")
+
+
+class GroupCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(description="Group creation payload.")
+
+
+class GroupUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    group_id: str = Field(min_length=1, description="Group ID.")
+    payload: dict[str, Any] = Field(description="Group update payload.")
+
+
+class GroupMemberUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    group_id: str = Field(min_length=1, description="Group ID.")
+    payload: dict[str, Any] = Field(description="Group members update payload.")
+
+
+class MemberByIdInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    member_id: str = Field(min_length=1, description="Member ID.")
+
+
+class LogByIdInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    log_id: str = Field(min_length=1, description="Log ID.")
+
+
+class AccessGrantInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(description="Access grant payload.")
+
+
+class AccessRevokeInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(description="Access revoke payload.")
+
+
+class AccessCheckInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(description="Access check query parameters.")
+
+
+class AccessSwitchInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(description="Active organization switch payload.")
+
+
+class TagByNameInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    tag_name: str = Field(min_length=1, description="Tag name.")
+
+
+class TagCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(description="Tag creation payload.")
+
+
+class TagUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    tag_name: str = Field(min_length=1, description="Tag name.")
+    payload: dict[str, Any] = Field(description="Tag update payload.")
+
+
+class ParsersUsageQueryInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(
+        description="Parser usage query parameters as defined by Bronto API."
+    )
+
+
+class PolicyByResourceInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(
+        description="Policy query parameters for identifying target resource."
+    )
+
+
+class EncryptionKeyByIdInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    encryption_key_id: str = Field(min_length=1, description="Encryption key ID.")
+
+
+class EncryptionKeyCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(description="Encryption key creation payload.")
+
+
+class EncryptionKeyUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    encryption_key_id: str = Field(min_length=1, description="Encryption key ID.")
+    payload: dict[str, Any] = Field(description="Encryption key update payload.")

@@ -345,6 +345,233 @@ class BrontoClient:
             decoding_error_message="Unexpected format for user organizations",
         )
 
+    def list_groups(self) -> List[Dict[str, Any]]:
+        response = self._request(
+            "GET",
+            "/groups",
+            action="Group retrieval",
+            failure_message="Cannot retrieve groups from Bronto",
+        )
+        payload = self._decode_json_response(
+            response,
+            error_log_message="Cannot decode groups retrieval response",
+            decoding_error_message="Unexpected format for retrieved groups",
+        )
+        return payload.get("groups", payload if isinstance(payload, list) else [])
+
+    def create_group(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "POST",
+            "/groups",
+            json_body=payload,
+            action="Group creation",
+            failure_message="Cannot create group in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode group creation response",
+            decoding_error_message="Unexpected format for created group",
+        )
+
+    def get_group(self, group_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            f"/groups/{group_id}",
+            action="Group retrieval by ID",
+            failure_message="Cannot retrieve group from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode group retrieval response",
+            decoding_error_message="Unexpected format for retrieved group",
+        )
+
+    def delete_group(self, group_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "DELETE",
+            f"/groups/{group_id}",
+            action="Group deletion",
+            failure_message="Cannot delete group in Bronto",
+        )
+        if response.content:
+            return self._decode_json_response(
+                response,
+                error_log_message="Cannot decode group deletion response",
+                decoding_error_message="Unexpected format for group deletion response",
+            )
+        return {"success": True}
+
+    def update_group(self, group_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "PATCH",
+            f"/groups/{group_id}",
+            json_body=payload,
+            action="Group update",
+            failure_message="Cannot update group in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode group update response",
+            decoding_error_message="Unexpected format for updated group",
+        )
+
+    def list_group_members(self, group_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            f"/groups/{group_id}/members",
+            action="Group members retrieval",
+            failure_message="Cannot retrieve group members from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode group members response",
+            decoding_error_message="Unexpected format for group members",
+        )
+
+    def add_group_members(self, group_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "POST",
+            f"/groups/{group_id}/members",
+            json_body=payload,
+            action="Group member add",
+            failure_message="Cannot add group members in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode group add-members response",
+            decoding_error_message="Unexpected format for group add-members response",
+        )
+
+    def remove_group_members(
+        self, group_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        response = self._request(
+            "DELETE",
+            f"/groups/{group_id}/members",
+            json_body=payload,
+            action="Group member removal",
+            failure_message="Cannot remove group members in Bronto",
+        )
+        if response.content:
+            return self._decode_json_response(
+                response,
+                error_log_message="Cannot decode group remove-members response",
+                decoding_error_message="Unexpected format for group remove-members response",
+            )
+        return {"success": True}
+
+    def list_member_groups(self, member_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            f"/groups/members/{member_id}",
+            action="Member groups retrieval",
+            failure_message="Cannot retrieve member groups from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode member groups response",
+            decoding_error_message="Unexpected format for member groups",
+        )
+
+    def list_monitors_by_log(self, log_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            "/monitors",
+            params={"log_id": log_id},
+            action="Monitor retrieval by log",
+            failure_message="Cannot retrieve monitors from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode monitors response",
+            decoding_error_message="Unexpected format for monitors",
+        )
+
+    def list_dashboards_by_log(self, log_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            "/dashboards",
+            params={"log_id": log_id},
+            action="Dashboard retrieval by log",
+            failure_message="Cannot retrieve dashboards from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode dashboards response",
+            decoding_error_message="Unexpected format for dashboards",
+        )
+
+    def grant_access(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "POST",
+            "/access",
+            json_body=payload,
+            action="Access grant",
+            failure_message="Cannot grant access in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode access grant response",
+            decoding_error_message="Unexpected format for access grant response",
+        )
+
+    def revoke_access(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "DELETE",
+            "/access",
+            json_body=payload,
+            action="Access revoke",
+            failure_message="Cannot revoke access in Bronto",
+        )
+        if response.content:
+            return self._decode_json_response(
+                response,
+                error_log_message="Cannot decode access revoke response",
+                decoding_error_message="Unexpected format for access revoke response",
+            )
+        return {"success": True}
+
+    def list_access_members(self) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            "/access",
+            action="Access members retrieval",
+            failure_message="Cannot retrieve access members from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode access members response",
+            decoding_error_message="Unexpected format for access members response",
+        )
+
+    def check_access(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            "/access/check",
+            params=payload,
+            action="Access check",
+            failure_message="Cannot check access in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode access check response",
+            decoding_error_message="Unexpected format for access check response",
+        )
+
+    def switch_active_organization(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "POST",
+            "/access/switch",
+            json_body=payload,
+            action="Organization switch",
+            failure_message="Cannot switch organization in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode organization switch response",
+            decoding_error_message="Unexpected format for organization switch response",
+        )
+
     def get_context(
         self,
         *,
@@ -561,6 +788,180 @@ class BrontoClient:
             decoding_error_message="Unexpected format for retrieved forward configs",
         )
         return payload.get("forward_configs", [])
+
+    def update_tag(self, tag_name: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "PUT",
+            f"/tags/{tag_name}",
+            json_body=payload,
+            action="Tag update",
+            failure_message="Cannot update tag in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode tag update response",
+            decoding_error_message="Unexpected format for tag update response",
+        )
+
+    def create_tag(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "POST",
+            "/tags",
+            json_body=payload,
+            action="Tag creation",
+            failure_message="Cannot create tag in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode tag creation response",
+            decoding_error_message="Unexpected format for tag creation response",
+        )
+
+    def delete_tag(self, tag_name: str) -> Dict[str, Any]:
+        response = self._request(
+            "DELETE",
+            f"/tags/{tag_name}",
+            action="Tag deletion",
+            failure_message="Cannot delete tag in Bronto",
+        )
+        if response.content:
+            return self._decode_json_response(
+                response,
+                error_log_message="Cannot decode tag deletion response",
+                decoding_error_message="Unexpected format for tag deletion response",
+            )
+        return {"success": True}
+
+    def list_tags(self) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            "/tags",
+            action="Tag listing",
+            failure_message="Cannot list tags from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode tag list response",
+            decoding_error_message="Unexpected format for tag list response",
+        )
+
+    def get_parsers_usage_for_log_id(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            "/parsers/usage/logs",
+            params=payload,
+            action="Parser usage retrieval by log",
+            failure_message="Cannot retrieve parser usage from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode parser usage response",
+            decoding_error_message="Unexpected format for parser usage response",
+        )
+
+    def get_parsers_usage_for_user_per_log_id(
+        self, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            "/parsers/usage/users",
+            params=payload,
+            action="Parser usage retrieval by user and log",
+            failure_message="Cannot retrieve parser usage from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode parser usage by user response",
+            decoding_error_message="Unexpected format for parser usage by user response",
+        )
+
+    def list_policies_by_resource(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            "/policies",
+            params=payload,
+            action="Policy retrieval by resource",
+            failure_message="Cannot retrieve policies from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode policies response",
+            decoding_error_message="Unexpected format for policies response",
+        )
+
+    def list_encryption_keys(self) -> List[Dict[str, Any]]:
+        response = self._request(
+            "GET",
+            "/encryption-keys",
+            action="Encryption key retrieval",
+            failure_message="Cannot retrieve encryption keys from Bronto",
+        )
+        payload = self._decode_json_response(
+            response,
+            error_log_message="Cannot decode encryption key retrieval response",
+            decoding_error_message="Unexpected format for encryption keys",
+        )
+        return payload.get(
+            "encryption_keys", payload if isinstance(payload, list) else []
+        )
+
+    def create_encryption_key(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        response = self._request(
+            "POST",
+            "/encryption-keys",
+            json_body=payload,
+            action="Encryption key creation",
+            failure_message="Cannot create encryption key in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode encryption key creation response",
+            decoding_error_message="Unexpected format for created encryption key",
+        )
+
+    def get_encryption_key(self, encryption_key_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "GET",
+            f"/encryption-keys/{encryption_key_id}",
+            action="Encryption key retrieval by ID",
+            failure_message="Cannot retrieve encryption key from Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode encryption key retrieval-by-id response",
+            decoding_error_message="Unexpected format for retrieved encryption key",
+        )
+
+    def delete_encryption_key(self, encryption_key_id: str) -> Dict[str, Any]:
+        response = self._request(
+            "DELETE",
+            f"/encryption-keys/{encryption_key_id}",
+            action="Encryption key deletion",
+            failure_message="Cannot delete encryption key in Bronto",
+        )
+        if response.content:
+            return self._decode_json_response(
+                response,
+                error_log_message="Cannot decode encryption key deletion response",
+                decoding_error_message="Unexpected format for encryption key deletion response",
+            )
+        return {"success": True}
+
+    def update_encryption_key(
+        self, encryption_key_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        response = self._request(
+            "PATCH",
+            f"/encryption-keys/{encryption_key_id}",
+            json_body=payload,
+            action="Encryption key update",
+            failure_message="Cannot update encryption key in Bronto",
+        )
+        return self._decode_json_response(
+            response,
+            error_log_message="Cannot decode encryption key update response",
+            decoding_error_message="Unexpected format for updated encryption key",
+        )
 
     def create_forward_config(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         response = self._request(
