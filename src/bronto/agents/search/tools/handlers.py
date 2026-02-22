@@ -8,7 +8,14 @@ from typing_extensions import Annotated
 from bronto.agents.playbooks import resolve_playbook
 from bronto.clients import BrontoClient
 from bronto.logger import module_logger
-from bronto.schemas import Datapoint, LogEvent, SearchStatusInput, Timeseries
+from bronto.schemas import (
+    ComputeMetricsInput,
+    Datapoint,
+    LogEvent,
+    SearchLogsInput,
+    SearchStatusInput,
+    Timeseries,
+)
 
 logger = module_logger(__name__)
 
@@ -34,45 +41,10 @@ class SearchToolHandlers:
 
     def search_logs(
         self,
-        timerange_start: Annotated[
-            Optional[int],
-            Field(
-                description="Unix timestamp in millisecond representing the start of a time range, e.g. 1756063146000. "
-                "If not specify, the current time is selected",
-                default_factory=lambda _: (int(time.time()) - (20 * 60)) * 1000,
-            ),
+        payload: Annotated[
+            SearchLogsInput,
+            Field(description="Structured payload for log search execution."),
         ],
-        timerange_end: Annotated[
-            Optional[int],
-            Field(
-                description="Unix timestamp in millisecond representing the end of a time range, e.g. 1756063254000. "
-                "If not specify, the time from 20 minutes ago is selected",
-                default_factory=lambda _: int(time.time()) * 1000,
-            ),
-        ],
-        log_ids: Annotated[
-            list[str],
-            Field(
-                description="List of dataset IDs, identifying sets of log data. Each log ID "
-                "represents a UUID",
-                min_length=1,
-            ),
-        ],
-        search_filter: Annotated[
-            Optional[str],
-            Field(
-                default="",
-                description="""
-                If no value is specified for this field, then no filter is apply when searching log data. Otherwise, 
-                this field must follow the syntax of an SQL `WHERE` clause. Unless the search filter is 
-                explicitly provided by the user, it is CRITICAL to use keys present in the dataset, e.g. 
-                "key_name"='key_value'. For this, the list of keys present in dataset can be retrieved via another tool 
-                exposed by this MCP server. In any case, following SQL syntax,
-                    - key names should be double-quoted
-                    - key value should be single-quoted if they are expected to be strings of characters
-                    - key value should not be quoted if they are expected to be numbers.""",
-            ),
-        ] = "",
     ) -> Annotated[
         List[LogEvent],
         Field(
@@ -80,17 +52,23 @@ class SearchToolHandlers:
             "the event, e.g. key=value"
         ),
     ]:
+        timerange_start = payload.timerange_start
+        timerange_end = payload.timerange_end
+        if timerange_start is None:
+            timerange_start = (int(time.time()) - (20 * 60)) * 1000
+        if timerange_end is None:
+            timerange_end = int(time.time()) * 1000
         logger.info(
             "timerange_start=%s, timerange_end=%s, log_ids=%s",
             timerange_start,
             timerange_end,
-            log_ids,
+            payload.log_ids,
         )
         log_events = self.bronto_client.search(
             timerange_start,
             timerange_end,
-            log_ids,
-            search_filter,
+            payload.log_ids,
+            payload.search_filter or "",
             _select=["*", "@raw"],
         )
         return log_events
@@ -121,60 +99,10 @@ class SearchToolHandlers:
 
     def compute_metrics(
         self,
-        timerange_start: Annotated[
-            int,
-            Field(
-                description="Unix timestamp in millisecond representing the start of a time range, e.g. 1756063146000",
-                default_factory=lambda _: (int(time.time()) - (20 * 60)) * 1000,
-            ),
+        payload: Annotated[
+            ComputeMetricsInput,
+            Field(description="Structured payload for metrics computation."),
         ],
-        timerange_end: Annotated[
-            int,
-            Field(
-                description="Unix timestamp in millisecond representing the end of a time range, e.g. 1756063254000",
-                default_factory=lambda _: int(time.time()) * 1000,
-            ),
-        ],
-        log_ids: Annotated[
-            list[str],
-            Field(
-                description="List of dataset IDs, identifying sets of log data. Each log ID "
-                "represents a UUID",
-                min_length=1,
-            ),
-        ],
-        metric_functions: Annotated[
-            list[str],
-            Field(
-                description="""
-                The metric function can be one of AVG, MIN, MAX, COUNT, MEAN, MEDIAN and SUM. The metric function takes a 
-                key name as attribute, except for COUNT which only takes the character '*' as attribute (i.e. 
-                "COUNT(*)"). Key names can be determined for given datasets, using one of the other tools provided by 
-                this MCP server."""
-            ),
-        ],
-        search_filter: Annotated[
-            str,
-            Field(
-                description="""
-                The `search_filter` attribute can follow the syntax of an SQL `WHERE` clause. Unless the search filter is 
-                explicitly provided by the user, it is CRITICAL to use keys present in the dataset, e.g. 
-                "key_name"='key_value'. For this, the list of keys present in dataset can be retrieved via another tool 
-                exposed by this MCP server. In any case, following SQL syntax,
-                    - key names should be double-quoted
-                    - key value should be single-quoted if they are expected to be strings of characters
-                    - key value should not be quoted if they are expected to be numbers."""
-            ),
-        ] = "",
-        group_by_keys: Annotated[
-            Optional[List[str]],
-            BeforeValidator(lambda value: SearchToolHandlers._normalize_group_by_keys(value)),
-            Field(
-                description="List of keys expected to be present in log datasets and "
-                "by which the metric computed should be grouped. A single key string "
-                "or comma-separated string is normalized to a list."
-            ),
-        ] = None,
     ) -> Annotated[
         Dict[str, Timeseries],
         Field(
@@ -183,21 +111,27 @@ class SearchToolHandlers:
             "represents the value of the computed metrics for a subset of the provided time range"
         ),
     ]:
-        group_by_keys = self._normalize_group_by_keys(group_by_keys) or []
+        timerange_start = payload.timerange_start
+        timerange_end = payload.timerange_end
+        if timerange_start is None:
+            timerange_start = (int(time.time()) - (20 * 60)) * 1000
+        if timerange_end is None:
+            timerange_end = int(time.time()) * 1000
+        group_by_keys = payload.group_by_keys or []
         logger.info(
             "timerange_start=%s, timerange_end=%s, log_ids=%s, metric_functions=%s, group_by_keys=[%s]",
             timerange_start,
             timerange_end,
-            log_ids,
-            ",".join(metric_functions),
+            payload.log_ids,
+            ",".join(payload.metric_functions),
             ",".join(group_by_keys),
         )
         resp = self.bronto_client.search_post(
             timerange_start,
             timerange_end,
-            log_ids,
-            search_filter,
-            _select=metric_functions,
+            payload.log_ids,
+            payload.search_filter,
+            _select=payload.metric_functions,
             group_by_keys=group_by_keys,
         )
         if len(group_by_keys) == 0:
@@ -223,23 +157,6 @@ class SearchToolHandlers:
             timeseries = Timeseries(count=group_serie["count"], timeseries=datapoints)
             result[group_serie["name"]] = timeseries
         return result
-
-    @staticmethod
-    def _normalize_group_by_keys(value: Any) -> Optional[List[str]]:
-        if value is None:
-            return None
-        if isinstance(value, str):
-            return [part.strip() for part in value.split(",") if part.strip()]
-        if isinstance(value, list):
-            normalized: List[str] = []
-            for item in value:
-                if not isinstance(item, str):
-                    raise ValueError("group_by_keys must contain only strings.")
-                trimmed = item.strip()
-                if trimmed:
-                    normalized.append(trimmed)
-            return normalized
-        raise ValueError("group_by_keys must be a list of strings or a string.")
 
     @staticmethod
     def _validate_input_time(input_time: str) -> str:

@@ -1,6 +1,6 @@
-from typing import Annotated, Dict, List
+from typing import Annotated, Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class LogEvent(BaseModel):
@@ -57,3 +57,93 @@ class Timeseries(BaseModel):
     timeseries: Annotated[
         List[Datapoint], Field(description="A list of datapoints per timestamp")
     ]
+
+
+class SearchLogsInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    timerange_start: Optional[int] = Field(
+        default=None,
+        description=(
+            "Unix timestamp in millisecond representing the start of a time range, "
+            "e.g. 1756063146000. If omitted, defaults to 20 minutes ago."
+        ),
+    )
+    timerange_end: Optional[int] = Field(
+        default=None,
+        description=(
+            "Unix timestamp in millisecond representing the end of a time range, "
+            "e.g. 1756063254000. If omitted, defaults to now."
+        ),
+    )
+    log_ids: list[str] = Field(
+        min_length=1,
+        description="List of dataset IDs identifying sets of log data.",
+    )
+    search_filter: Optional[str] = Field(
+        default="",
+        description=(
+            "Optional SQL-like WHERE filter. Key names should be double-quoted; "
+            "string values single-quoted."
+        ),
+    )
+
+
+class ComputeMetricsInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    timerange_start: Optional[int] = Field(
+        default=None,
+        description=(
+            "Unix timestamp in millisecond representing the start of a time range, "
+            "e.g. 1756063146000. If omitted, defaults to 20 minutes ago."
+        ),
+    )
+    timerange_end: Optional[int] = Field(
+        default=None,
+        description=(
+            "Unix timestamp in millisecond representing the end of a time range, "
+            "e.g. 1756063254000. If omitted, defaults to now."
+        ),
+    )
+    log_ids: list[str] = Field(
+        min_length=1,
+        description="List of dataset IDs identifying sets of log data.",
+    )
+    metric_functions: list[str] = Field(
+        description=(
+            "Metric functions such as AVG, MIN, MAX, COUNT(*), MEAN, MEDIAN, SUM."
+        )
+    )
+    search_filter: str = Field(
+        default="",
+        description=(
+            "Optional SQL-like WHERE filter. Key names should be double-quoted; "
+            "string values single-quoted."
+        ),
+    )
+    group_by_keys: Optional[List[str]] = Field(
+        default=None,
+        description=(
+            "Optional list of key names used to group computed metrics. "
+            "A single comma-separated string is normalized to a list."
+        ),
+    )
+
+    @field_validator("group_by_keys", mode="before")
+    @classmethod
+    def _normalize_group_by_keys(cls, value: Any) -> Optional[List[str]]:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return [part.strip() for part in value.split(",") if part.strip()]
+        if isinstance(value, list):
+            normalized: List[str] = []
+            for item in value:
+                if not isinstance(item, str):
+                    raise ValueError("group_by_keys must contain only strings.")
+                trimmed = item.strip()
+                if trimmed:
+                    normalized.append(trimmed)
+            return normalized
+        raise ValueError("group_by_keys must be a list of strings or a string.")

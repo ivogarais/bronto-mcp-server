@@ -35,6 +35,8 @@ from bronto.schemas import (
     MemberByIdInput,
     ParsersUsageQueryInput,
     PolicyByResourceInput,
+    ComputeMetricsInput,
+    SearchLogsInput,
     SearchStatusInput,
     TagByNameInput,
     TagCreateInput,
@@ -212,9 +214,11 @@ def test_search_logs(bronto_tools, mock_bronto_client):
     mock_bronto_client.search.return_value = mock_log_events
 
     log_events = bronto_tools.search_logs(
-        log_ids=["test_log_id"],
-        timerange_start=int(time.time()) * 1000,
-        timerange_end=int(time.time()) * 1000,
+        SearchLogsInput(
+            log_ids=["test_log_id"],
+            timerange_start=int(time.time()) * 1000,
+            timerange_end=int(time.time()) * 1000,
+        )
     )
 
     assert len(log_events) == 2
@@ -235,10 +239,12 @@ def test_compute_metrics_no_group(bronto_tools, mock_bronto_client):
     mock_bronto_client.search_post.return_value = mock_response
 
     metrics = bronto_tools.compute_metrics(
-        log_ids=["test_log_id"],
-        metric_functions=["SUM"],
-        timerange_start=int(time.time()) * 1000,
-        timerange_end=int(time.time()) * 1000,
+        ComputeMetricsInput(
+            log_ids=["test_log_id"],
+            metric_functions=["SUM"],
+            timerange_start=int(time.time()) * 1000,
+            timerange_end=int(time.time()) * 1000,
+        )
     )
 
     groups = list(metrics.keys())
@@ -275,11 +281,13 @@ def test_compute_metrics_single_group(bronto_tools, mock_bronto_client):
     mock_bronto_client.search_post.return_value = mock_response
 
     metrics = bronto_tools.compute_metrics(
-        log_ids=["test_log_id"],
-        metric_functions=["SUM"],
-        timerange_start=int(time.time()) * 1000,
-        timerange_end=int(time.time()) * 1000,
-        group_by_keys=["some_key"],
+        ComputeMetricsInput(
+            log_ids=["test_log_id"],
+            metric_functions=["SUM"],
+            timerange_start=int(time.time()) * 1000,
+            timerange_end=int(time.time()) * 1000,
+            group_by_keys=["some_key"],
+        )
     )
 
     groups = list(metrics.keys())
@@ -303,11 +311,13 @@ def test_compute_metrics_group_by_keys_string_is_normalized_to_list(
     mock_bronto_client.search_post.return_value = {"groups_series": []}
 
     bronto_tools.compute_metrics(
-        log_ids=["test_log_id"],
-        metric_functions=["COUNT(*)"],
-        timerange_start=int(time.time()) * 1000,
-        timerange_end=int(time.time()) * 1000,
-        group_by_keys="event.status",
+        ComputeMetricsInput(
+            log_ids=["test_log_id"],
+            metric_functions=["COUNT(*)"],
+            timerange_start=int(time.time()) * 1000,
+            timerange_end=int(time.time()) * 1000,
+            group_by_keys="event.status",
+        )
     )
 
     assert mock_bronto_client.search_post.call_args.kwargs["group_by_keys"] == [
@@ -321,11 +331,13 @@ def test_compute_metrics_group_by_keys_csv_string_is_split(
     mock_bronto_client.search_post.return_value = {"groups_series": []}
 
     bronto_tools.compute_metrics(
-        log_ids=["test_log_id"],
-        metric_functions=["COUNT(*)"],
-        timerange_start=int(time.time()) * 1000,
-        timerange_end=int(time.time()) * 1000,
-        group_by_keys="event.status, event.type",
+        ComputeMetricsInput(
+            log_ids=["test_log_id"],
+            metric_functions=["COUNT(*)"],
+            timerange_start=int(time.time()) * 1000,
+            timerange_end=int(time.time()) * 1000,
+            group_by_keys="event.status, event.type",
+        )
     )
 
     assert mock_bronto_client.search_post.call_args.kwargs["group_by_keys"] == [

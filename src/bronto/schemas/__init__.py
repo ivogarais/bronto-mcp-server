@@ -44,6 +44,7 @@ from .dashboard import (
 )
 from .datasets import Dataset, DatasetKey
 from .search import Datapoint, LogEvent, Timeseries
+from .search import ComputeMetricsInput, SearchLogsInput
 
 __all__ = [
     "ContextQueryInput",
@@ -91,4 +92,6 @@ __all__ = [
     "LogEvent",
     "Datapoint",
     "Timeseries",
+    "SearchLogsInput",
+    "ComputeMetricsInput",
 ]
