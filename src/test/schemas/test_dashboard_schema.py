@@ -8,11 +8,18 @@ def _sample_payload() -> dict:
     return {
         "title": "Errors (Last 30m)",
         "density": "comfortable",
-        "bar_charts": [
+        "charts": [
             {
                 "title": "Errors by Service",
+                "family": "bar",
                 "labels": ["api", "worker", "web"],
                 "values": [120, 80, 60],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                    "group_by_keys": ["service"],
+                },
             }
         ],
         "tables": [
@@ -28,6 +35,12 @@ def _sample_payload() -> dict:
                     ["2026-02-22T12:00:03Z", "worker", "timeout contacting db"],
                 ],
                 "row_limit": 200,
+                "live_query": {
+                    "mode": "logs",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "search_filter": "\"level\"='error'",
+                    "limit": 25,
+                },
             }
         ],
     }
@@ -49,9 +62,7 @@ def test_build_bronto_app_spec_contains_expected_sections():
 
 def test_dashboard_build_input_requires_at_least_one_widget():
     with pytest.raises(ValidationError):
-        DashboardBuildInput.model_validate(
-            {"title": "Empty", "bar_charts": [], "tables": []}
-        )
+        DashboardBuildInput.model_validate({"title": "Empty", "charts": [], "tables": []})
 
 
 def test_dashboard_table_column_title_has_length_limit():
@@ -108,26 +119,52 @@ def test_dashboard_build_input_supports_all_chart_families():
                 "family": "bar",
                 "labels": ["a", "b"],
                 "values": [1, 2],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                    "group_by_keys": ["event.type"],
+                },
             },
             {
                 "title": "Line",
                 "family": "line",
                 "xy": [{"name": "p95", "points": [{"x": 1, "y": 2}]}],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                },
             },
             {
                 "title": "Scatter",
                 "family": "scatter",
                 "xy": [{"name": "p95", "points": [{"x": 1, "y": 2}]}],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                },
             },
             {
                 "title": "Waveline",
                 "family": "waveline",
                 "xy": [{"name": "p95", "points": [{"x": 1, "y": 2}]}],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                },
             },
             {
                 "title": "Heatmap",
                 "family": "heatmap",
                 "heatmap": {"width": 2, "height": 1, "values": [0.2, 0.8]},
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                },
             },
             {
                 "title": "OHLC",
@@ -141,9 +178,32 @@ def test_dashboard_build_input_supports_all_chart_families():
                         "close": 11,
                     }
                 ],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                },
             },
-            {"title": "Spark", "family": "sparkline", "value": [1, 2, 3]},
-            {"title": "Stream", "family": "streamline", "value": [1, 2, 3]},
+            {
+                "title": "Spark",
+                "family": "sparkline",
+                "value": [1, 2, 3],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                },
+            },
+            {
+                "title": "Stream",
+                "family": "streamline",
+                "value": [1, 2, 3],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                },
+            },
             {
                 "title": "Time",
                 "family": "timeseries",
@@ -153,6 +213,11 @@ def test_dashboard_build_input_supports_all_chart_families():
                         "points": [{"t": "2026-02-22T12:00:00Z", "v": 100}],
                     }
                 ],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                },
             },
         ],
     }
@@ -227,3 +292,32 @@ def test_dashboard_build_input_emits_live_query_spec():
     assert chart_dataset["liveQuery"]["metricFunctions"] == ["COUNT(*)"]
     assert table_dataset["liveQuery"]["mode"] == "logs"
     assert table_dataset["liveQuery"]["limit"] == 50
+
+
+def test_dashboard_build_input_rejects_missing_live_query():
+    with pytest.raises(ValidationError):
+        DashboardBuildInput.model_validate(
+            {
+                "title": "Missing live query",
+                "charts": [
+                    {
+                        "title": "Errors by Service",
+                        "family": "bar",
+                        "labels": ["api"],
+                        "values": [1],
+                    }
+                ],
+            }
+        )
+
+
+def test_dashboard_build_input_rejects_legacy_bar_charts():
+    with pytest.raises(ValidationError):
+        DashboardBuildInput.model_validate(
+            {
+                "title": "Legacy shape",
+                "bar_charts": [
+                    {"title": "Errors", "labels": ["api"], "values": [1]}
+                ],
+            }
+        )

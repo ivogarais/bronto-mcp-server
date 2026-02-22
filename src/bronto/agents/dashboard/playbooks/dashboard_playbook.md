@@ -16,16 +16,16 @@ Required top-level shape:
   "title": "Errors (Last 30m)",
   "density": "comfortable",
   "charts": [],
-  "bar_charts": [],
   "tables": []
 }
 ```
 
 Rules:
 - `title` is required.
-- Include at least one widget in `charts`, `bar_charts`, or `tables`.
+- Include at least one widget in `charts` or `tables`.
 - `density` can be `comfortable` or `compact`.
 - Do NOT use top-level `widgets` or `chart`.
+- Do NOT use top-level `bar_charts` (live-only mode).
 - Use descriptive titles for dashboard/charts/tables and avoid generic names like
   `Bar Chart 1` or `Table 1`.
 - Title limits: dashboard `<= 64` chars, chart/table `<= 48` chars.
@@ -38,12 +38,9 @@ Rules:
 - `heatmap` (dataset kind: `heatmapCells`)
 - `streamline`, `sparkline` (dataset kind: `valueSeries`)
 
-Legacy convenience:
-- `bar_charts[]` remains supported and is normalized into `charts[]` with family `bar`.
-
-Optional live polling:
-- `charts[].live_query` and `tables[].live_query` can be set so `bronto-cli` polls
-  Bronto and refreshes datasets continuously.
+Required live polling:
+- Every item in `charts[]` and `tables[]` must include `live_query` so `bronto-cli`
+  polls Bronto and refreshes datasets continuously.
 - `live_query` shape:
   - `mode`: `metrics` or `logs`
   - `log_ids`: required list of dataset IDs

@@ -11,11 +11,18 @@ def _sample_payload() -> dict:
     return {
         "title": "Errors (Last 30m)",
         "density": "comfortable",
-        "bar_charts": [
+        "charts": [
             {
                 "title": "Errors by Service",
+                "family": "bar",
                 "labels": ["api", "worker"],
                 "values": [120, 80],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                    "group_by_keys": ["service"],
+                },
             }
         ],
         "tables": [
@@ -27,6 +34,12 @@ def _sample_payload() -> dict:
                     {"title": "message", "width": "flex"},
                 ],
                 "rows": [["2026-02-22T12:00:01Z", "api", "NullPointerException"]],
+                "live_query": {
+                    "mode": "logs",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "search_filter": "\"level\"='error'",
+                    "limit": 20,
+                },
             }
         ],
     }
@@ -132,6 +145,5 @@ def test_dashboard_playbook_returns_expected_guidance(runtime):
 
     assert "Required top-level shape" in playbook
     assert "charts" in playbook
-    assert "bar_charts" in playbook
     assert "tables" in playbook
     assert "Do NOT use top-level `widgets` or `chart`" in playbook

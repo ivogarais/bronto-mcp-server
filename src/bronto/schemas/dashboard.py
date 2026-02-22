@@ -290,9 +290,8 @@ class DashboardChartInput(BaseModel):
     time: list[DashboardTimeSeriesInput] | None = None
     timeseries_series: list[DashboardSeriesRefInput] | None = None
     time_format: str | None = None
-    live_query: DashboardLiveQueryInput | None = Field(
-        default=None,
-        description="Optional live query definition for bronto-cli polling.",
+    live_query: DashboardLiveQueryInput = Field(
+        description="Required live query definition for bronto-cli polling.",
     )
 
     @field_validator("scatter_point_rune")
@@ -306,6 +305,8 @@ class DashboardChartInput(BaseModel):
 
     @model_validator(mode="after")
     def _validate_for_family(self) -> "DashboardChartInput":
+        if self.live_query is None:
+            raise ValueError("chart live_query is required")
         if self.family == "bar":
             if not self.labels or not self.values:
                 raise ValueError("bar chart requires labels and values")
@@ -355,9 +356,8 @@ class DashboardTableInput(BaseModel):
         description="Table rows. Each row must match columns length.",
     )
     row_limit: int = Field(default=200, ge=1, le=500)
-    live_query: DashboardLiveQueryInput | None = Field(
-        default=None,
-        description="Optional live query definition for bronto-cli polling.",
+    live_query: DashboardLiveQueryInput = Field(
+        description="Required live query definition for bronto-cli polling.",
     )
 
     @field_validator("title")
@@ -419,6 +419,10 @@ class DashboardBuildInput(BaseModel):
 
     @model_validator(mode="after")
     def _validate_has_widgets(self) -> "DashboardBuildInput":
+        if len(self.bar_charts) > 0:
+            raise ValueError(
+                "bar_charts is not supported in live-only mode; use charts[] with live_query"
+            )
         if len(self.charts) == 0 and len(self.bar_charts) == 0 and len(self.tables) == 0:
             raise ValueError("dashboard must include at least one chart or table")
         return self
@@ -433,16 +437,6 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
     weights: list[int] = []
 
     normalized_charts = list(payload.charts)
-    for chart in payload.bar_charts:
-        normalized_charts.append(
-            DashboardChartInput(
-                title=chart.title,
-                family="bar",
-                labels=chart.labels,
-                values=chart.values,
-                bar_orientation="vertical",
-            )
-        )
 
     for idx, chart in enumerate(normalized_charts, start=1):
         chart_ref = f"chart{idx}"
@@ -477,8 +471,7 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
             "columns": dataset_columns,
             "rows": table.rows,
         }
-        if table.live_query is not None:
-            table_dataset["liveQuery"] = _live_query_to_spec(table.live_query)
+        table_dataset["liveQuery"] = _live_query_to_spec(table.live_query)
         datasets[dataset_ref] = table_dataset
         main_row_children.append(
             {
@@ -649,8 +642,7 @@ def _build_chart_dataset(chart: DashboardChartInput) -> dict[str, Any]:
         dataset["unit"] = chart.unit
     if chart.format is not None:
         dataset["format"] = chart.format
-    if chart.live_query is not None:
-        dataset["liveQuery"] = _live_query_to_spec(chart.live_query)
+    dataset["liveQuery"] = _live_query_to_spec(chart.live_query)
 
     return dataset
 
