@@ -1,6 +1,33 @@
+from datetime import datetime, timezone
 from typing import Annotated, Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+
+def _parse_timerange_to_unix_ms(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        trimmed = value.strip()
+        if not trimmed:
+            return None
+        if trimmed.isdigit():
+            return int(trimmed)
+        try:
+            return int(
+                datetime.strptime(trimmed, "%Y-%m-%d %H:%M:%S")
+                .replace(tzinfo=timezone.utc)
+                .timestamp()
+                * 1000
+            )
+        except ValueError as exc:
+            raise ValueError(
+                "timerange values must be unix milliseconds or "
+                'UTC datetime in "YYYY-MM-DD HH:mm:ss" format'
+            ) from exc
+    return value
 
 
 class LogEvent(BaseModel):
@@ -65,14 +92,16 @@ class SearchLogsInput(BaseModel):
     timerange_start: Optional[int] = Field(
         default=None,
         description=(
-            "Unix timestamp in millisecond representing the start of a time range, "
+            "Unix timestamp in millisecond (or UTC datetime string "
+            '"YYYY-MM-DD HH:mm:ss") representing the start of a time range, '
             "e.g. 1756063146000. If omitted, defaults to 20 minutes ago."
         ),
     )
     timerange_end: Optional[int] = Field(
         default=None,
         description=(
-            "Unix timestamp in millisecond representing the end of a time range, "
+            "Unix timestamp in millisecond (or UTC datetime string "
+            '"YYYY-MM-DD HH:mm:ss") representing the end of a time range, '
             "e.g. 1756063254000. If omitted, defaults to now."
         ),
     )
@@ -84,7 +113,7 @@ class SearchLogsInput(BaseModel):
         default="",
         description=(
             "Optional SQL-like WHERE filter. Key names should be double-quoted; "
-            "string values single-quoted."
+            "string values single-quoted. Alias `filter` is also accepted."
         ),
     )
     limit: Optional[int] = Field(
@@ -93,6 +122,22 @@ class SearchLogsInput(BaseModel):
         description="Optional maximum number of events to return.",
     )
 
+    @field_validator("timerange_start", "timerange_end", mode="before")
+    @classmethod
+    def _normalize_timerange_fields(cls, value: Any) -> Any:
+        return _parse_timerange_to_unix_ms(value)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_filter_alias(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        if "filter" in data:
+            if "search_filter" not in data:
+                data["search_filter"] = data["filter"]
+            data.pop("filter", None)
+        return data
+
 
 class ComputeMetricsInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -100,14 +145,16 @@ class ComputeMetricsInput(BaseModel):
     timerange_start: Optional[int] = Field(
         default=None,
         description=(
-            "Unix timestamp in millisecond representing the start of a time range, "
+            "Unix timestamp in millisecond (or UTC datetime string "
+            '"YYYY-MM-DD HH:mm:ss") representing the start of a time range, '
             "e.g. 1756063146000. If omitted, defaults to 20 minutes ago."
         ),
     )
     timerange_end: Optional[int] = Field(
         default=None,
         description=(
-            "Unix timestamp in millisecond representing the end of a time range, "
+            "Unix timestamp in millisecond (or UTC datetime string "
+            '"YYYY-MM-DD HH:mm:ss") representing the end of a time range, '
             "e.g. 1756063254000. If omitted, defaults to now."
         ),
     )
@@ -124,7 +171,7 @@ class ComputeMetricsInput(BaseModel):
         default="",
         description=(
             "Optional SQL-like WHERE filter. Key names should be double-quoted; "
-            "string values single-quoted."
+            "string values single-quoted. Alias `filter` is also accepted."
         ),
     )
     group_by_keys: Optional[List[str]] = Field(
@@ -152,3 +199,19 @@ class ComputeMetricsInput(BaseModel):
                     normalized.append(trimmed)
             return normalized
         raise ValueError("group_by_keys must be a list of strings or a string.")
+
+    @field_validator("timerange_start", "timerange_end", mode="before")
+    @classmethod
+    def _normalize_timerange_fields(cls, value: Any) -> Any:
+        return _parse_timerange_to_unix_ms(value)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_filter_alias(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        if "filter" in data:
+            if "search_filter" not in data:
+                data["search_filter"] = data["filter"]
+            data.pop("filter", None)
+        return data

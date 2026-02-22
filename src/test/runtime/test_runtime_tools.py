@@ -241,6 +241,22 @@ def test_search_logs_with_limit(bronto_tools, mock_bronto_client):
     assert mock_bronto_client.search.call_args.args[4] == 500
 
 
+def test_search_logs_accepts_filter_alias(bronto_tools, mock_bronto_client):
+    mock_bronto_client.search.return_value = []
+
+    bronto_tools.search_logs(
+        SearchLogsInput(
+            log_ids=["test_log_id"],
+            timerange_start=1704067200000,
+            timerange_end=1771804799000,
+            filter="\"event.status\" = 'ERROR'",
+            limit=20,
+        )
+    )
+
+    assert mock_bronto_client.search.call_args.args[3] == "\"event.status\" = 'ERROR'"
+
+
 def test_compute_metrics_no_group(bronto_tools, mock_bronto_client):
     timestamp = BrontoRuntime.get_timestamp_as_unix_epoch("2023-01-01 00:00:00")
     mock_response = {
@@ -359,6 +375,44 @@ def test_compute_metrics_group_by_keys_csv_string_is_split(
         "event.status",
         "event.type",
     ]
+
+
+def test_compute_metrics_accepts_datetime_strings_for_timerange(
+    bronto_tools, mock_bronto_client
+):
+    mock_bronto_client.search_post.return_value = {
+        "totals": {"count": 0, "timeseries": []}
+    }
+
+    bronto_tools.compute_metrics(
+        ComputeMetricsInput(
+            log_ids=["test_log_id"],
+            metric_functions=["COUNT(*)"],
+            timerange_start="2024-01-01 00:00:00",
+            timerange_end="2026-02-22 23:59:59",
+        )
+    )
+
+    assert mock_bronto_client.search_post.call_args.args[0] == 1704067200000
+    assert mock_bronto_client.search_post.call_args.args[1] == 1771804799000
+
+
+def test_compute_metrics_accepts_filter_alias(bronto_tools, mock_bronto_client):
+    mock_bronto_client.search_post.return_value = {
+        "totals": {"count": 0, "timeseries": []}
+    }
+
+    bronto_tools.compute_metrics(
+        ComputeMetricsInput(
+            log_ids=["test_log_id"],
+            metric_functions=["COUNT(*)"],
+            timerange_start=1704067200000,
+            timerange_end=1771804799000,
+            filter="\"level\"='error'",
+        )
+    )
+
+    assert mock_bronto_client.search_post.call_args.args[3] == "\"level\"='error'"
 
 
 def test_list_api_keys(bronto_tools, mock_bronto_client):
