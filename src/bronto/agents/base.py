@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 class AgentToolSpec(BaseModel):
     name: str = Field(description="Tool name exposed to MCP clients")
     handler: str = Field(
-        description="Method name on BrontoTools that implements this spec"
+        description="Method name on BrontoRuntime that implements this spec"
     )
     description: str = Field(description="LLM-facing tool description")
 
@@ -27,7 +27,7 @@ class BrontoAgentRegistry(BaseModel):
 
     def build_instructions(self) -> str:
         lines = [
-            "Use this MCP server to interact with Bronto datasets and log data. Refer to play books if you get stuck",
+            "Use this MCP server to interact with Bronto datasets and log data. Refer to playbooks if you get stuck.",
             "Available agents:",
         ]
         for agent in self.agents:

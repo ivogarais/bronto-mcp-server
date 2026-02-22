@@ -4,7 +4,7 @@ from bronto.agents import build_agent_registry
 from bronto.clients import BrontoClient
 from bronto.config import Config, MCPTransport
 from bronto.logger import bootstrap_logging, module_logger
-from bronto.tools import BrontoTools
+from bronto.runtime import BrontoRuntime
 
 logger = module_logger(__name__)
 
@@ -26,8 +26,8 @@ def main() -> None:
         dependencies=["pydantic"],
     )
     bronto_client = BrontoClient(config.bronto_api_key, config.bronto_api_endpoint)
-    bronto_tools = BrontoTools(bronto_client, agent_registry)
-    bronto_tools.register(mcp)
+    runtime = BrontoRuntime(bronto_client, agent_registry)
+    runtime.register(mcp)
     logger.info("Bronto tools registered successfully")
     if config.mcp_transport is MCPTransport.STREAMABLE_HTTP:
         logger.info(
