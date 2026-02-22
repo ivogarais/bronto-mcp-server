@@ -191,6 +191,52 @@ class DashboardHeatmapDataInput(BaseModel):
         return self
 
 
+class DashboardLiveQueryInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mode: Literal["metrics", "logs"] = Field(
+        default="metrics",
+        description="Live query mode used by bronto-cli runtime polling.",
+    )
+    log_ids: list[str] = Field(
+        min_length=1,
+        description="List of Bronto dataset IDs used for live polling.",
+    )
+    metric_functions: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Metrics expressions (e.g. COUNT(*), AVG(\"event.latencyMs\")). "
+            "Required when mode=metrics."
+        ),
+    )
+    search_filter: str = Field(
+        default="",
+        description="Optional SQL-like filter applied to live queries.",
+    )
+    group_by_keys: list[str] = Field(
+        default_factory=list,
+        description="Optional grouping keys for metrics mode.",
+    )
+    lookback_sec: int = Field(
+        default=1800,
+        ge=30,
+        le=604800,
+        description="Sliding lookback window in seconds (30s to 7d).",
+    )
+    limit: int = Field(
+        default=100,
+        ge=1,
+        le=5000,
+        description="Maximum rows for logs mode.",
+    )
+
+    @model_validator(mode="after")
+    def _validate_mode_requirements(self) -> "DashboardLiveQueryInput":
+        if self.mode == "metrics" and len(self.metric_functions) == 0:
+            raise ValueError("metric_functions is required when mode='metrics'")
+        return self
+
+
 class DashboardChartInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -244,6 +290,10 @@ class DashboardChartInput(BaseModel):
     time: list[DashboardTimeSeriesInput] | None = None
     timeseries_series: list[DashboardSeriesRefInput] | None = None
     time_format: str | None = None
+    live_query: DashboardLiveQueryInput | None = Field(
+        default=None,
+        description="Optional live query definition for bronto-cli polling.",
+    )
 
     @field_validator("scatter_point_rune")
     @classmethod
@@ -305,6 +355,10 @@ class DashboardTableInput(BaseModel):
         description="Table rows. Each row must match columns length.",
     )
     row_limit: int = Field(default=200, ge=1, le=500)
+    live_query: DashboardLiveQueryInput | None = Field(
+        default=None,
+        description="Optional live query definition for bronto-cli polling.",
+    )
 
     @field_validator("title")
     @classmethod
@@ -418,11 +472,14 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
             "columns": [_to_table_column_spec(column) for column in resolved_columns],
             "rowLimit": table.row_limit,
         }
-        datasets[dataset_ref] = {
+        table_dataset: dict[str, Any] = {
             "kind": "table",
             "columns": dataset_columns,
             "rows": table.rows,
         }
+        if table.live_query is not None:
+            table_dataset["liveQuery"] = _live_query_to_spec(table.live_query)
+        datasets[dataset_ref] = table_dataset
         main_row_children.append(
             {
                 "type": "table",
@@ -592,8 +649,24 @@ def _build_chart_dataset(chart: DashboardChartInput) -> dict[str, Any]:
         dataset["unit"] = chart.unit
     if chart.format is not None:
         dataset["format"] = chart.format
+    if chart.live_query is not None:
+        dataset["liveQuery"] = _live_query_to_spec(chart.live_query)
 
     return dataset
+
+
+def _live_query_to_spec(live_query: DashboardLiveQueryInput) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "mode": live_query.mode,
+        "logIds": live_query.log_ids,
+        "searchFilter": live_query.search_filter,
+        "groupByKeys": live_query.group_by_keys,
+        "lookbackSec": live_query.lookback_sec,
+        "limit": live_query.limit,
+    }
+    if len(live_query.metric_functions) > 0:
+        payload["metricFunctions"] = live_query.metric_functions
+    return payload
 
 
 def _series_refs_from_xy(series: list[DashboardXYSeriesInput]) -> list[DashboardSeriesRefInput]:

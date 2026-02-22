@@ -181,3 +181,49 @@ def test_dashboard_build_input_supports_all_chart_families():
         "Stream",
         "Time",
     }
+
+
+def test_dashboard_build_input_emits_live_query_spec():
+    payload = {
+        "title": "Live Errors",
+        "charts": [
+            {
+                "title": "Errors by Type",
+                "family": "bar",
+                "labels": ["seed"],
+                "values": [0],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                    "group_by_keys": ["event.type"],
+                    "lookback_sec": 900,
+                },
+            }
+        ],
+        "tables": [
+            {
+                "title": "Recent Errors",
+                "columns": [{"title": "event.type"}, {"title": "message"}],
+                "rows": [],
+                "live_query": {
+                    "mode": "logs",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "search_filter": "\"level\"='error'",
+                    "limit": 50,
+                },
+            }
+        ],
+    }
+
+    spec = build_bronto_app_spec(DashboardBuildInput.model_validate(payload))
+    chart_dataset = spec["datasets"]["chart_dataset_1"]
+    table_dataset = spec["datasets"]["table_dataset_1"]
+
+    assert chart_dataset["liveQuery"]["mode"] == "metrics"
+    assert chart_dataset["liveQuery"]["logIds"] == [
+        "fb7f985f-3558-0232-d30e-42142719a400"
+    ]
+    assert chart_dataset["liveQuery"]["metricFunctions"] == ["COUNT(*)"]
+    assert table_dataset["liveQuery"]["mode"] == "logs"
+    assert table_dataset["liveQuery"]["limit"] == 50

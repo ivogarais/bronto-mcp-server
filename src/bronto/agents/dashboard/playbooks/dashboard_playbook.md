@@ -41,6 +41,19 @@ Rules:
 Legacy convenience:
 - `bar_charts[]` remains supported and is normalized into `charts[]` with family `bar`.
 
+Optional live polling:
+- `charts[].live_query` and `tables[].live_query` can be set so `bronto-cli` polls
+  Bronto and refreshes datasets continuously.
+- `live_query` shape:
+  - `mode`: `metrics` or `logs`
+  - `log_ids`: required list of dataset IDs
+  - `metric_functions`: required when `mode=metrics`
+  - `search_filter`, `group_by_keys`
+  - `lookback_sec` (default `1800`)
+  - `limit` (default `100`)
+- `bronto-cli` requires `BRONTO_API_KEY` (and optional `BRONTO_API_ENDPOINT`) for
+  live query execution.
+
 Table item shape:
 
 ```json
