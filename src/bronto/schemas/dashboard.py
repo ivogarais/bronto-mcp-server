@@ -3,12 +3,14 @@ from __future__ import annotations
 import re
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 _COLUMN_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]{0,23}$")
 
 
 class DashboardTableColumnInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     title: str = Field(
         description="Column title shown in the table header.",
         min_length=1,
@@ -61,6 +63,8 @@ class DashboardTableColumnInput(BaseModel):
 
 
 class DashboardBarChartInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     title: str = Field(
         description="Panel title for this bar chart.", min_length=1, max_length=48
     )
@@ -102,6 +106,8 @@ class DashboardBarChartInput(BaseModel):
 
 
 class DashboardTableInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     title: str = Field(
         description="Panel title for this table.", min_length=1, max_length=48
     )
@@ -149,6 +155,8 @@ class DashboardTableInput(BaseModel):
 
 
 class DashboardBuildInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     title: str = Field(description="Dashboard title.", min_length=1, max_length=64)
     density: Literal["compact", "comfortable"] = Field(default="comfortable")
     bar_charts: list[DashboardBarChartInput] = Field(default_factory=list)

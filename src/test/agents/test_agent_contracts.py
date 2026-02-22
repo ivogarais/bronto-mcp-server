@@ -61,4 +61,5 @@ def test_dashboard_agent_contract():
     assert tool_names == {
         "build_dashboard_spec",
         "serve_dashboard",
+        "dashboard_playbook",
     }

@@ -8,3 +8,4 @@ class DashboardAgentName(str, Enum):
 class DashboardToolName(str, Enum):
     BUILD_DASHBOARD_SPEC = "build_dashboard_spec"
     SERVE_DASHBOARD = "serve_dashboard"
+    DASHBOARD_PLAYBOOK = "dashboard_playbook"

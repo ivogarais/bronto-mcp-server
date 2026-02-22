@@ -105,6 +105,7 @@ def test_playbook_prompts_are_registered():
     tool_names = {tool.name for tool in registry.iter_tool_specs()}
 
     assert "datasets_playbook" in tool_names
+    assert "dashboard_playbook" in tool_names
     assert "search_logs_playbook" in tool_names
     assert "compute_metrics_playbook" in tool_names
     assert "statement_ids_playbook" in tool_names
@@ -292,4 +293,3 @@ def test_compute_metrics_group_by_keys_csv_string_is_split(
         "event.status",
         "event.type",
     ]
-

@@ -79,3 +79,12 @@ def test_serve_dashboard_fails_when_bronto_is_missing(monkeypatch, runtime):
 
     with pytest.raises(RuntimeError, match="Could not find `bronto` in PATH"):
         runtime.serve_dashboard(_sample_payload())
+
+
+def test_dashboard_playbook_returns_expected_guidance(runtime):
+    playbook = runtime.dashboard_playbook()
+
+    assert "Required top-level shape" in playbook
+    assert "bar_charts" in playbook
+    assert "tables" in playbook
+    assert "Do NOT use `widgets`, `chart`, or `charts`" in playbook

@@ -28,6 +28,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "bronto.agents.datasets" = ["playbooks/*.md"]
+"bronto.agents.dashboard" = ["playbooks/*.md"]
 "bronto.agents.search" = ["playbooks/*.md"]
 "bronto.agents.statement_ids" = ["playbooks/*.md"]
 

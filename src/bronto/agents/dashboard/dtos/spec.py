@@ -29,5 +29,13 @@ class DashboardAgentSpec(BaseModel):
                     "`bronto serve --spec <path>` in the current terminal."
                 ),
             ),
+            AgentToolSpec(
+                name=DashboardToolName.DASHBOARD_PLAYBOOK.value,
+                handler=DashboardToolName.DASHBOARD_PLAYBOOK.value,
+                description=(
+                    "Playbook with exact payload contract and examples for "
+                    "build_dashboard_spec and serve_dashboard."
+                ),
+            ),
         ]
     )

@@ -70,6 +70,16 @@ def test_dashboard_table_rows_must_match_column_count():
         DashboardBuildInput.model_validate(payload)
 
 
+def test_dashboard_payload_rejects_unknown_top_level_keys():
+    payload = _sample_payload()
+    payload["chart"] = {"title": "Errors", "type": "metric"}
+
+    with pytest.raises(ValidationError) as exc_info:
+        DashboardBuildInput.model_validate(payload)
+
+    assert "Extra inputs are not permitted" in str(exc_info.value)
+
+
 def test_dashboard_column_keys_are_normalized_and_deduplicated():
     payload = _sample_payload()
     payload["tables"][0]["columns"] = [
