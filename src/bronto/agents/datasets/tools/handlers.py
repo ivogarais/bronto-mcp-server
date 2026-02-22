@@ -1,11 +1,11 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from pydantic import Field
 from typing_extensions import Annotated
 
 from bronto.agents.playbooks import resolve_playbook
 from bronto.clients import BrontoClient
-from bronto.schemas import Dataset
+from bronto.schemas import Dataset, LogCreateInput
 
 
 class DatasetsToolHandlers:
@@ -37,6 +37,18 @@ class DatasetsToolHandlers:
             )
             for dataset in datasets_data
         ]
+
+    def create_log(
+        self,
+        payload: Annotated[
+            LogCreateInput,
+            Field(description="Structured payload for creating a new log."),
+        ],
+    ) -> Annotated[
+        Dict[str, Any],
+        Field(description="Created log payload."),
+    ]:
+        return self.bronto_client.create_log(payload.model_dump())
 
     def get_datasets_by_name(
         self,

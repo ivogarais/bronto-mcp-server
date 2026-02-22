@@ -1,6 +1,84 @@
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
+
+
+class ApiKeyCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, description="API key display name.")
+    roles: list[str] = Field(
+        min_length=1, description="Role identifiers assigned to this API key."
+    )
+    tags: dict[str, str] = Field(
+        default_factory=dict,
+        description="Optional key-value tags.",
+    )
+    expires_at: int | None = Field(
+        default=None,
+        description="Expiration time as Unix timestamp. If omitted, key does not expire.",
+    )
+
+
+class ApiKeyByIdInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key_id: str = Field(min_length=1, description="API key ID.")
+
+
+class ApiKeyUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_key_id: str = Field(min_length=1, description="API key ID.")
+    name: str | None = Field(default=None, description="Updated API key name.")
+    roles: list[str] | None = Field(default=None, description="Updated role IDs.")
+    tags: dict[str, str] | None = Field(default=None, description="Updated tags.")
+    expires_at: int | None = Field(
+        default=None,
+        description="Updated expiration timestamp.",
+    )
+
+
+class UserCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    first_name: str = Field(min_length=1, description="User first name.")
+    last_name: str = Field(min_length=1, description="User last name.")
+    email: str = Field(min_length=1, description="User email.")
+    roles: list[str] = Field(min_length=1, description="Role identifiers for this user.")
+    tags: dict[str, str] = Field(default_factory=dict, description="Optional tags.")
+    login_methods: list[str] | None = Field(
+        default=None, description="Optional login method identifiers."
+    )
+
+
+class UserByIdInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: str = Field(min_length=1, description="User ID.")
+
+
+class UserUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: str = Field(min_length=1, description="User ID.")
+    first_name: str | None = Field(default=None, description="Updated first name.")
+    last_name: str | None = Field(default=None, description="Updated last name.")
+    email: str | None = Field(default=None, description="Updated email.")
+    roles: list[str] | None = Field(default=None, description="Updated role IDs.")
+    tags: dict[str, str] | None = Field(default=None, description="Updated tags.")
+    login_methods: list[str] | None = Field(
+        default=None, description="Updated login method identifiers."
+    )
+
+
+class UserPreferencesUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    user_id: str = Field(min_length=1, description="User ID.")
+    payload: dict[str, Any] = Field(description="User preferences update payload.")
 
 
 class ExportByIdInput(BaseModel):
@@ -78,4 +156,57 @@ class UsageQueryInput(BaseModel):
     )
     delta_to_ts: int | None = Field(
         default=None, description="Baseline end timestamp in ms."
+    )
+
+
+class ExportCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(
+        description="Raw export creation payload as defined by Bronto exports API."
+    )
+
+
+class ForwardConfigCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(
+        description="Raw forward-config creation payload."
+    )
+
+
+class ForwardConfigUpdateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    forward_config_id: str = Field(min_length=1, description="Forward config ID.")
+    payload: dict[str, Any] = Field(description="Forward config update payload.")
+
+
+class ForwardConfigDeleteInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    forward_config_id: str = Field(min_length=1, description="Forward config ID.")
+
+
+class ForwardConfigTestInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    payload: dict[str, Any] = Field(
+        description="Forward destination connectivity test payload."
+    )
+
+
+class LogCreateInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    log: str = Field(min_length=1, description="Log (dataset) name.")
+    logset: str = Field(min_length=1, description="Collection name.")
+    tags: dict[str, str] = Field(default_factory=dict, description="Optional tags.")
+
+
+class SearchStatusInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status_id: str = Field(
+        min_length=1, description="Search status ID returned by async search execution."
     )

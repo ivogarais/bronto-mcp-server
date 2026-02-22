@@ -7,11 +7,25 @@ from bronto.agents import build_agent_registry
 from bronto.clients import BrontoClient
 from bronto.runtime import BrontoRuntime
 from bronto.schemas import (
+    ApiKeyByIdInput,
+    ApiKeyCreateInput,
+    ApiKeyUpdateInput,
     ContextQueryInput,
     Datapoint,
     ExportByIdInput,
+    ExportCreateInput,
+    ForwardConfigCreateInput,
+    ForwardConfigDeleteInput,
+    ForwardConfigTestInput,
+    ForwardConfigUpdateInput,
+    LogCreateInput,
     LogEvent,
+    SearchStatusInput,
     Timeseries,
+    UserByIdInput,
+    UserCreateInput,
+    UserPreferencesUpdateInput,
+    UserUpdateInput,
     UsageQueryInput,
 )
 
@@ -311,6 +325,39 @@ def test_list_api_keys(bronto_tools, mock_bronto_client):
     assert result == [{"id": "k1", "name": "prod"}]
 
 
+def test_create_api_key(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_api_key.return_value = {"id": "k1"}
+
+    result = bronto_tools.create_api_key(
+        ApiKeyCreateInput(name="prod", roles=["SearchApi"])
+    )
+
+    mock_bronto_client.create_api_key.assert_called_once_with(
+        {"name": "prod", "roles": ["SearchApi"], "tags": {}, "expires_at": None}
+    )
+    assert result == {"id": "k1"}
+
+
+def test_update_api_key(bronto_tools, mock_bronto_client):
+    mock_bronto_client.update_api_key.return_value = {"id": "k1", "name": "new"}
+
+    result = bronto_tools.update_api_key(
+        ApiKeyUpdateInput(api_key_id="k1", name="new")
+    )
+
+    mock_bronto_client.update_api_key.assert_called_once_with("k1", {"name": "new"})
+    assert result["name"] == "new"
+
+
+def test_delete_api_key(bronto_tools, mock_bronto_client):
+    mock_bronto_client.delete_api_key.return_value = {"success": True}
+
+    result = bronto_tools.delete_api_key(ApiKeyByIdInput(api_key_id="k1"))
+
+    mock_bronto_client.delete_api_key.assert_called_once_with("k1")
+    assert result == {"success": True}
+
+
 def test_list_users(bronto_tools, mock_bronto_client):
     mock_bronto_client.list_users.return_value = [{"id": "u1", "email": "a@b.c"}]
 
@@ -318,6 +365,118 @@ def test_list_users(bronto_tools, mock_bronto_client):
 
     mock_bronto_client.list_users.assert_called_once_with()
     assert result == [{"id": "u1", "email": "a@b.c"}]
+
+
+def test_create_user(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_user.return_value = {"id": "u1"}
+
+    result = bronto_tools.create_user(
+        UserCreateInput(
+            first_name="Ada",
+            last_name="Lovelace",
+            email="ada@example.com",
+            roles=["Admin"],
+        )
+    )
+
+    mock_bronto_client.create_user.assert_called_once_with(
+        {
+            "first_name": "Ada",
+            "last_name": "Lovelace",
+            "email": "ada@example.com",
+            "roles": ["Admin"],
+            "tags": {},
+            "login_methods": None,
+        }
+    )
+    assert result == {"id": "u1"}
+
+
+def test_get_user_by_id(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_user_by_id.return_value = {"id": "u1"}
+
+    result = bronto_tools.get_user_by_id(UserByIdInput(user_id="u1"))
+
+    mock_bronto_client.get_user_by_id.assert_called_once_with("u1")
+    assert result == {"id": "u1"}
+
+
+def test_update_user(bronto_tools, mock_bronto_client):
+    mock_bronto_client.update_user.return_value = {"id": "u1", "first_name": "Grace"}
+
+    result = bronto_tools.update_user(
+        UserUpdateInput(user_id="u1", first_name="Grace")
+    )
+
+    mock_bronto_client.update_user.assert_called_once_with("u1", {"first_name": "Grace"})
+    assert result["first_name"] == "Grace"
+
+
+def test_delete_user(bronto_tools, mock_bronto_client):
+    mock_bronto_client.delete_user.return_value = {"success": True}
+
+    result = bronto_tools.delete_user(UserByIdInput(user_id="u1"))
+
+    mock_bronto_client.delete_user.assert_called_once_with("u1")
+    assert result == {"success": True}
+
+
+def test_deactivate_user(bronto_tools, mock_bronto_client):
+    mock_bronto_client.deactivate_user.return_value = {"success": True}
+
+    result = bronto_tools.deactivate_user(UserByIdInput(user_id="u1"))
+
+    mock_bronto_client.deactivate_user.assert_called_once_with("u1")
+    assert result == {"success": True}
+
+
+def test_reactivate_user(bronto_tools, mock_bronto_client):
+    mock_bronto_client.reactivate_user.return_value = {"success": True}
+
+    result = bronto_tools.reactivate_user(UserByIdInput(user_id="u1"))
+
+    mock_bronto_client.reactivate_user.assert_called_once_with("u1")
+    assert result == {"success": True}
+
+
+def test_resend_user_invitation(bronto_tools, mock_bronto_client):
+    mock_bronto_client.resend_user_invitation.return_value = {"success": True}
+
+    result = bronto_tools.resend_user_invitation(UserByIdInput(user_id="u1"))
+
+    mock_bronto_client.resend_user_invitation.assert_called_once_with("u1")
+    assert result == {"success": True}
+
+
+def test_get_user_preferences(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_user_preferences.return_value = {"timezone": "UTC"}
+
+    result = bronto_tools.get_user_preferences(UserByIdInput(user_id="u1"))
+
+    mock_bronto_client.get_user_preferences.assert_called_once_with("u1")
+    assert result == {"timezone": "UTC"}
+
+
+def test_update_user_preferences(bronto_tools, mock_bronto_client):
+    mock_bronto_client.update_user_preferences.return_value = {"timezone": "CET"}
+
+    result = bronto_tools.update_user_preferences(
+        UserPreferencesUpdateInput(user_id="u1", payload={"timezone": "CET"})
+    )
+
+    mock_bronto_client.update_user_preferences.assert_called_once_with(
+        "u1", {"timezone": "CET"}
+    )
+    assert result == {"timezone": "CET"}
+
+
+def test_get_user_organizations(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_user_organizations.return_value = {"organizations": []}
+
+    result = bronto_tools.get_user_organizations(UserByIdInput(user_id="u1"))
+
+    mock_bronto_client.get_user_organizations.assert_called_once_with("u1")
+    assert result == {"organizations": []}
 
 
 def test_get_context_forwards_named_arguments(bronto_tools, mock_bronto_client):
@@ -360,6 +519,15 @@ def test_list_exports(bronto_tools, mock_bronto_client):
     assert result == [{"export_id": "exp1"}]
 
 
+def test_create_export(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_export.return_value = {"export_id": "exp1"}
+
+    result = bronto_tools.create_export(ExportCreateInput(payload={"format": "csv"}))
+
+    mock_bronto_client.create_export.assert_called_once_with({"format": "csv"})
+    assert result == {"export_id": "exp1"}
+
+
 def test_get_export(bronto_tools, mock_bronto_client):
     mock_bronto_client.get_export.return_value = {"export_id": "exp1", "status": "DONE"}
 
@@ -367,6 +535,15 @@ def test_get_export(bronto_tools, mock_bronto_client):
 
     mock_bronto_client.get_export.assert_called_once_with("exp1")
     assert result["status"] == "DONE"
+
+
+def test_delete_export(bronto_tools, mock_bronto_client):
+    mock_bronto_client.delete_export.return_value = {"success": True}
+
+    result = bronto_tools.delete_export(ExportByIdInput(export_id="exp1"))
+
+    mock_bronto_client.delete_export.assert_called_once_with("exp1")
+    assert result == {"success": True}
 
 
 def test_get_usage_for_log_id_forwards_named_arguments(bronto_tools, mock_bronto_client):
@@ -448,3 +625,82 @@ def test_list_forward_configs(bronto_tools, mock_bronto_client):
 
     mock_bronto_client.list_forward_configs.assert_called_once_with()
     assert result == [{"id": "fwd-1"}]
+
+
+def test_create_forward_config(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_forward_config.return_value = {"id": "fwd-1"}
+
+    result = bronto_tools.create_forward_config(
+        ForwardConfigCreateInput(payload={"destination": "s3"})
+    )
+
+    mock_bronto_client.create_forward_config.assert_called_once_with(
+        {"destination": "s3"}
+    )
+    assert result == {"id": "fwd-1"}
+
+
+def test_update_forward_config(bronto_tools, mock_bronto_client):
+    mock_bronto_client.update_forward_config.return_value = {"id": "fwd-1", "ok": True}
+
+    result = bronto_tools.update_forward_config(
+        ForwardConfigUpdateInput(forward_config_id="fwd-1", payload={"enabled": True})
+    )
+
+    mock_bronto_client.update_forward_config.assert_called_once_with(
+        "fwd-1", {"enabled": True}
+    )
+    assert result["ok"] is True
+
+
+def test_delete_forward_config(bronto_tools, mock_bronto_client):
+    mock_bronto_client.delete_forward_config.return_value = {"success": True}
+
+    result = bronto_tools.delete_forward_config(
+        ForwardConfigDeleteInput(forward_config_id="fwd-1")
+    )
+
+    mock_bronto_client.delete_forward_config.assert_called_once_with("fwd-1")
+    assert result == {"success": True}
+
+
+def test_test_forward_destination(bronto_tools, mock_bronto_client):
+    mock_bronto_client.test_forward_destination.return_value = {"ok": True}
+
+    result = bronto_tools.test_forward_destination(
+        ForwardConfigTestInput(payload={"destination": "s3"})
+    )
+
+    mock_bronto_client.test_forward_destination.assert_called_once_with(
+        {"destination": "s3"}
+    )
+    assert result == {"ok": True}
+
+
+def test_create_log(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_log.return_value = {"log_id": "l1"}
+
+    result = bronto_tools.create_log(LogCreateInput(log="a", logset="b"))
+
+    mock_bronto_client.create_log.assert_called_once_with(
+        {"log": "a", "logset": "b", "tags": {}}
+    )
+    assert result == {"log_id": "l1"}
+
+
+def test_get_search_status(bronto_tools, mock_bronto_client):
+    mock_bronto_client.get_search_status.return_value = {"status": "RUNNING"}
+
+    result = bronto_tools.get_search_status(SearchStatusInput(status_id="s1"))
+
+    mock_bronto_client.get_search_status.assert_called_once_with("s1")
+    assert result == {"status": "RUNNING"}
+
+
+def test_cancel_search(bronto_tools, mock_bronto_client):
+    mock_bronto_client.cancel_search.return_value = {"success": True}
+
+    result = bronto_tools.cancel_search(SearchStatusInput(status_id="s1"))
+
+    mock_bronto_client.cancel_search.assert_called_once_with("s1")
+    assert result == {"success": True}

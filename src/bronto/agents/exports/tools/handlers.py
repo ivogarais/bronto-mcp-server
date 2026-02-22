@@ -4,7 +4,7 @@ from pydantic import Field
 from typing_extensions import Annotated
 
 from bronto.clients import BrontoClient
-from bronto.schemas import ExportByIdInput
+from bronto.schemas import ExportByIdInput, ExportCreateInput
 
 
 class ExportsToolHandlers:
@@ -20,6 +20,18 @@ class ExportsToolHandlers:
     ]:
         return self.bronto_client.list_exports()
 
+    def create_export(
+        self,
+        payload: Annotated[
+            ExportCreateInput,
+            Field(description="Structured export creation payload."),
+        ],
+    ) -> Annotated[
+        dict[str, Any],
+        Field(description="Created export payload."),
+    ]:
+        return self.bronto_client.create_export(payload.payload)
+
     def get_export(
         self,
         payload: Annotated[
@@ -31,3 +43,15 @@ class ExportsToolHandlers:
         Field(description="Export job details payload."),
     ]:
         return self.bronto_client.get_export(payload.export_id)
+
+    def delete_export(
+        self,
+        payload: Annotated[
+            ExportByIdInput,
+            Field(description="Structured payload containing export_id."),
+        ],
+    ) -> Annotated[
+        dict[str, Any],
+        Field(description="Export deletion result."),
+    ]:
+        return self.bronto_client.delete_export(payload.export_id)

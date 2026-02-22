@@ -18,6 +18,16 @@ class SearchAgentSpec(BaseModel):
                 ),
             ),
             AgentToolSpec(
+                name=SearchToolName.GET_SEARCH_STATUS.value,
+                handler=SearchToolName.GET_SEARCH_STATUS.value,
+                description="Retrieve status details for an asynchronous search by status ID.",
+            ),
+            AgentToolSpec(
+                name=SearchToolName.CANCEL_SEARCH.value,
+                handler=SearchToolName.CANCEL_SEARCH.value,
+                description="Cancel an asynchronous search by status ID.",
+            ),
+            AgentToolSpec(
                 name=SearchToolName.COMPUTE_METRICS.value,
                 handler=SearchToolName.COMPUTE_METRICS.value,
                 description=(

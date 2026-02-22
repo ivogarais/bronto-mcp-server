@@ -7,6 +7,7 @@ class DatasetsAgentName(str, Enum):
 
 class DatasetsToolName(str, Enum):
     GET_DATASETS = "get_datasets"
+    CREATE_LOG = "create_log"
     GET_DATASETS_BY_NAME = "get_datasets_by_name"
     GET_KEYS = "get_keys"
     GET_ALL_DATASETS_KEYS = "get_all_datasets_keys"

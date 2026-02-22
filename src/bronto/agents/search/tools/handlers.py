@@ -8,7 +8,7 @@ from typing_extensions import Annotated
 from bronto.agents.playbooks import resolve_playbook
 from bronto.clients import BrontoClient
 from bronto.logger import module_logger
-from bronto.schemas import Datapoint, LogEvent, Timeseries
+from bronto.schemas import Datapoint, LogEvent, SearchStatusInput, Timeseries
 
 logger = module_logger(__name__)
 
@@ -94,6 +94,30 @@ class SearchToolHandlers:
             _select=["*", "@raw"],
         )
         return log_events
+
+    def get_search_status(
+        self,
+        payload: Annotated[
+            SearchStatusInput,
+            Field(description="Structured payload containing async search status_id."),
+        ],
+    ) -> Annotated[
+        Dict[str, Any],
+        Field(description="Raw status payload for the asynchronous search."),
+    ]:
+        return self.bronto_client.get_search_status(payload.status_id)
+
+    def cancel_search(
+        self,
+        payload: Annotated[
+            SearchStatusInput,
+            Field(description="Structured payload containing async search status_id."),
+        ],
+    ) -> Annotated[
+        Dict[str, Any],
+        Field(description="Cancellation result payload."),
+    ]:
+        return self.bronto_client.cancel_search(payload.status_id)
 
     def compute_metrics(
         self,

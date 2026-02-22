@@ -16,6 +16,11 @@ class DatasetsAgentSpec(BaseModel):
                 description="Fetch all available dataset details including log IDs and tags.",
             ),
             AgentToolSpec(
+                name=DatasetsToolName.CREATE_LOG.value,
+                handler=DatasetsToolName.CREATE_LOG.value,
+                description="Create a new log (dataset) in a collection.",
+            ),
+            AgentToolSpec(
                 name=DatasetsToolName.GET_DATASETS_BY_NAME.value,
                 handler=DatasetsToolName.GET_DATASETS_BY_NAME.value,
                 description="Fetch datasets matching an exact dataset name and collection name.",

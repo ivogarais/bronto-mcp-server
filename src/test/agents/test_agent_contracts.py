@@ -18,6 +18,7 @@ def test_datasets_agent_contract():
     assert "Discovers datasets" in agent.description
     assert tool_names == {
         "get_datasets",
+        "create_log",
         "get_datasets_by_name",
         "get_keys",
         "get_all_datasets_keys",
@@ -34,6 +35,8 @@ def test_search_agent_contract():
     assert "Searches Bronto log events" in agent.description
     assert tool_names == {
         "search_logs",
+        "get_search_status",
+        "cancel_search",
         "compute_metrics",
         "get_timestamp_as_unix_epoch",
         "get_current_time",
@@ -79,6 +82,9 @@ def test_api_keys_agent_contract():
     assert "API key" in agent.description
     assert tool_names == {
         "list_api_keys",
+        "create_api_key",
+        "update_api_key",
+        "delete_api_key",
     }
 
 
@@ -90,6 +96,16 @@ def test_users_agent_contract():
     assert "user" in agent.description.lower()
     assert tool_names == {
         "list_users",
+        "create_user",
+        "get_user_by_id",
+        "update_user",
+        "delete_user",
+        "deactivate_user",
+        "reactivate_user",
+        "resend_user_invitation",
+        "get_user_preferences",
+        "update_user_preferences",
+        "get_user_organizations",
     }
 
 
@@ -112,7 +128,9 @@ def test_exports_agent_contract():
     assert "export" in agent.description.lower()
     assert tool_names == {
         "list_exports",
+        "create_export",
         "get_export",
+        "delete_export",
     }
 
 
@@ -136,4 +154,8 @@ def test_forward_agent_contract():
     assert "forward" in agent.description.lower()
     assert tool_names == {
         "list_forward_configs",
+        "create_forward_config",
+        "update_forward_config",
+        "delete_forward_config",
+        "test_forward_destination",
     }
