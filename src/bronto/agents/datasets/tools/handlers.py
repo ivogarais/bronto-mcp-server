@@ -28,17 +28,15 @@ class DatasetsToolHandlers:
         ),
     ]:
         datasets_data = self.bronto_client.get_datasets()
-        result = []
-        for dataset in datasets_data:
-            result.append(
-                Dataset(
-                    name=dataset["log"],
-                    collection=dataset["logset"],
-                    log_id=dataset["log_id"],
-                    tags=dataset["tags"],
-                )
+        return [
+            Dataset(
+                name=dataset["log"],
+                collection=dataset["logset"],
+                log_id=dataset["log_id"],
+                tags=dataset["tags"],
             )
-        return result
+            for dataset in datasets_data
+        ]
 
     def get_datasets_by_name(
         self,
@@ -60,24 +58,16 @@ class DatasetsToolHandlers:
         ),
     ]:
         datasets = self.bronto_client.get_datasets()
-        result = []
-        collection_names = [dataset["logset"] for dataset in datasets]
-        if len(collection_names) == 0:
-            return []
-        for dataset in datasets:
-            if dataset["log"] != dataset_name or dataset["logset"] != collection_name:
-                continue
-            result.append(
-                Dataset(
-                    name=dataset["log"],
-                    collection=dataset["logset"],
-                    log_id=dataset["log_id"],
-                    tags=dataset["tags"],
-                )
+        return [
+            Dataset(
+                name=dataset["log"],
+                collection=dataset["logset"],
+                log_id=dataset["log_id"],
+                tags=dataset["tags"],
             )
-        if len(result) == 0:
-            return []
-        return result
+            for dataset in datasets
+            if dataset["log"] == dataset_name and dataset["logset"] == collection_name
+        ]
 
     def get_keys(
         self,
@@ -95,8 +85,7 @@ class DatasetsToolHandlers:
             description="list key names for keys present in the provided dataset referenced with the `log_id` parameter"
         ),
     ]:
-        keys = [dataset.name for dataset in self.bronto_client.get_keys(log_id)]
-        return keys
+        return [dataset.name for dataset in self.bronto_client.get_keys(log_id)]
 
     def get_all_datasets_keys(
         self,
@@ -106,8 +95,7 @@ class DatasetsToolHandlers:
             description="Map from dataset IDs to the list of key names, for keys present in each dataset"
         ),
     ]:
-        keys = self.bronto_client.get_all_datasets_top_keys()
-        return keys
+        return self.bronto_client.get_all_datasets_top_keys()
 
     def get_key_values(
         self,

@@ -14,7 +14,7 @@ class LogEvent(BaseModel):
     attributes: Annotated[
         Dict[str, str],
         Field(
-            default={},
+            default_factory=dict,
             description="List of attributes associated to the log event. An attribute is a key-value "
             "pair that provide context about the event. For instance, "
             '"$hostname"="i-1234567890" may indicate that the service generated the log event'

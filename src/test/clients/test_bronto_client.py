@@ -5,6 +5,7 @@ import pytest
 
 from bronto.clients import (
     BrontoClient,
+    BrontoConnectionException,
     BrontoResponseDecodingException,
     BrontoResponseException,
     FailedBrontoRequestException,
@@ -62,7 +63,7 @@ def test_request_network_error(client):
     mock_http.request.side_effect = httpx.RequestError("boom", request=request)
     client.__dict__["http_client"] = mock_http
 
-    with pytest.raises(Exception, match="Cannot interact with Bronto"):
+    with pytest.raises(BrontoConnectionException, match="connectivity issue"):
         client._request("GET", "/search")
 
 
@@ -148,6 +149,17 @@ def test_get_top_keys_returns_values(client, monkeypatch):
 
     assert set(values["service"]) == {"api", "worker"}
     assert values["level"] == ["info"]
+
+
+def test_get_top_keys_handles_missing_log_id_payload(client, monkeypatch):
+    body = {"other-log-id": {"service": {"values": {"api": 10}}}}
+    monkeypatch.setattr(
+        client, "_request", Mock(return_value=_response(200, json_body=body))
+    )
+
+    values = client.get_top_keys("id1")
+
+    assert values == {}
 
 
 def test_get_all_datasets_top_keys(client, monkeypatch):

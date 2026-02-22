@@ -40,7 +40,7 @@ class DatasetKey(BaseModel):
         Field(description="The name of the key, e.g. `environment`, `$service`, etc"),
     ]
     values: Annotated[
-        List[str], Field(default=[], description="Sample values of the key")
+        List[str], Field(default_factory=list, description="Sample values of the key")
     ]
 
     def add_values(self, values: List[str]) -> None:

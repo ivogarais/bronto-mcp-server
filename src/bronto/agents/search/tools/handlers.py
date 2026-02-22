@@ -173,7 +173,7 @@ class SearchToolHandlers:
             log_ids,
             search_filter,
             _select=metric_functions,
-            group_by_keys=[",".join(group_by_keys)],
+            group_by_keys=group_by_keys,
         )
         if len(group_by_keys) == 0:
             totals = resp["totals"]
@@ -201,11 +201,8 @@ class SearchToolHandlers:
 
     @staticmethod
     def _validate_input_time(input_time: str) -> str:
-        try:
-            datetime.strptime(input_time, "%Y-%m-%d %H:%M:%S")
-            return input_time
-        except ValueError as e:
-            raise e
+        datetime.strptime(input_time, "%Y-%m-%d %H:%M:%S")
+        return input_time
 
     @staticmethod
     def get_timestamp_as_unix_epoch(
@@ -237,7 +234,7 @@ class SearchToolHandlers:
             str, Field(description="Current time in the YYYY-MM-DD HH:mm:ss format.")
         ]
     ):
-        return datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")
+        return datetime.strftime(datetime.now(timezone.utc), "%Y-%m-%d %H:%M:%S")
 
     @staticmethod
     def compute_metrics_playbook() -> Annotated[

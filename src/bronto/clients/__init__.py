@@ -1,5 +1,6 @@
 from .bronto import (
     BrontoClient,
+    BrontoConnectionException,
     BrontoResponseDecodingException,
     BrontoResponseException,
     FailedBrontoRequestException,
@@ -7,6 +8,7 @@ from .bronto import (
 
 __all__ = [
     "BrontoClient",
+    "BrontoConnectionException",
     "FailedBrontoRequestException",
     "BrontoResponseDecodingException",
     "BrontoResponseException",

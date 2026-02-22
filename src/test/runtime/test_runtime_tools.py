@@ -211,6 +211,7 @@ def test_compute_metrics_no_group(bronto_tools, mock_bronto_client):
     assert group.timeseries[0] == Datapoint(
         timestamp=timestamp, count=50, quantiles={}, value=10.5
     )
+    assert mock_bronto_client.search_post.call_args.kwargs["group_by_keys"] == []
 
 
 def test_compute_metrics_single_group(bronto_tools, mock_bronto_client):
@@ -251,3 +252,6 @@ def test_compute_metrics_single_group(bronto_tools, mock_bronto_client):
     assert group.timeseries[0] == Datapoint(
         timestamp=timestamp, count=50, quantiles={}, value=10.5
     )
+    assert mock_bronto_client.search_post.call_args.kwargs["group_by_keys"] == [
+        "some_key"
+    ]

@@ -1,5 +1,5 @@
-import json
 import csv
+import json
 from functools import cached_property
 from typing import Any, Dict, List, Optional
 
@@ -20,6 +20,10 @@ class BrontoResponseDecodingException(Exception):
 
 
 class BrontoResponseException(Exception):
+    pass
+
+
+class BrontoConnectionException(Exception):
     pass
 
 
@@ -95,9 +99,9 @@ class BrontoClient:
                 f'{failure_message}. status={status_code}, reason="{e.response.reason_phrase}"'
             ) from e
         except httpx.RequestError as e:
-            logger.exception("Cannot interact with Bronto", exc_info=True)
-            raise Exception(
-                "Cannot interact with Bronto. Please check endpoint configuration."
+            logger.exception("%s failed due to network error", action, exc_info=True)
+            raise BrontoConnectionException(
+                f"{action} failed due to connectivity issue. Please check BRONTO_API_ENDPOINT and network reachability."
             ) from e
 
     @staticmethod
@@ -213,14 +217,20 @@ class BrontoClient:
             decoding_error_message="Unexpected format for retrieved data",
         )
 
-        keys_and_values = {}
-        for key in body[log_id]:
-            if key in keys_and_values:
-                keys_and_values[key].extend(body[log_id][key].get("values", {}).keys())
-            else:
-                keys_and_values[key] = body[log_id][key].get("values", {}).keys()
+        dataset_payload = body.get(log_id, {})
+        if not isinstance(dataset_payload, dict):
+            raise BrontoResponseDecodingException(
+                "Unexpected format for retrieved top keys"
+            )
+
+        keys_and_values: Dict[str, List[str]] = {}
+        for key, key_payload in dataset_payload.items():
+            values = key_payload.get("values", {})
+            if not isinstance(values, dict):
+                continue
+            keys_and_values[key] = list(values.keys())
         logger.info("keys_and_values=%s", keys_and_values)
-        return {key: list(set(keys_and_values[key])) for key in keys_and_values}
+        return keys_and_values
 
     def get_all_datasets_top_keys(self) -> Dict[str, List[str]]:
         response = self._request(
@@ -236,10 +246,11 @@ class BrontoClient:
         )
 
         log_ids_and_keys: Dict[str, List[str]] = {}
-        for log_id in body:
-            if log_id not in log_ids_and_keys:
+        for log_id, dataset_payload in body.items():
+            if not isinstance(dataset_payload, dict):
                 log_ids_and_keys[log_id] = []
-            log_ids_and_keys[log_id].extend(body[log_id].keys())
+                continue
+            log_ids_and_keys[log_id] = list(dataset_payload.keys())
         logger.info("log_ids_and_keys=%s", log_ids_and_keys)
         return log_ids_and_keys
 
@@ -257,39 +268,24 @@ class BrontoClient:
         )
 
         log_ids_and_keys_and_values: Dict[str, Dict[str, List[str]]] = {}
-        for log_id in body:
-            if log_id not in log_ids_and_keys_and_values:
+        for log_id, dataset_payload in body.items():
+            if not isinstance(dataset_payload, dict):
                 log_ids_and_keys_and_values[log_id] = {}
-            log_ids_and_keys_and_values[log_id].update(
-                {
-                    key: [value for value in body[log_id][key]["values"].keys()]
-                    for key in body[log_id]
-                }
-            )
+                continue
+
+            log_ids_and_keys_and_values[log_id] = {}
+            for key, key_payload in dataset_payload.items():
+                values = key_payload.get("values", {})
+                if not isinstance(values, dict):
+                    log_ids_and_keys_and_values[log_id][key] = []
+                    continue
+                log_ids_and_keys_and_values[log_id][key] = list(values.keys())
         logger.info("log_ids_and_keys_and_values=%s", log_ids_and_keys_and_values)
         return log_ids_and_keys_and_values
 
-    @staticmethod
-    def get_dataset_key(
-        key_name: str, dataset_keys: List[DatasetKey]
-    ) -> Optional[DatasetKey]:
-        for dataset_key in dataset_keys:
-            if dataset_key.name == key_name:
-                return dataset_key
-        return None
-
     def get_keys(self, log_id: str) -> List[DatasetKey]:
         top_keys = self.get_top_keys(log_id)
-        result = []
-        processed_keys = set()
-        for key in top_keys:
-            if key in processed_keys:
-                dataset = BrontoClient.get_dataset_key(key, result)
-                dataset.add_values(top_keys[key])
-            else:
-                result.append(DatasetKey(name=key, values=top_keys[key]))
-                processed_keys.add(key)
-        return result
+        return [DatasetKey(name=key, values=values) for key, values in top_keys.items()]
 
     @staticmethod
     def _read_statement_ids_csv(
@@ -347,7 +343,7 @@ class BrontoClient:
         except FileNotFoundError:
             logger.error("Statement IDs CSV file not found: %s", csv_file_path)
             return None
-        except Exception:
+        except (KeyError, csv.Error, OSError):
             logger.exception("Error reading statement IDs CSV: %s", csv_file_path)
             return None
 

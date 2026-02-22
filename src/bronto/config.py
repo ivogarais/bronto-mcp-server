@@ -9,10 +9,8 @@ class MCPTransport(str, Enum):
 
 class Config:
     def __init__(self):
-        self.bronto_api_key = os.environ.get("BRONTO_API_KEY")
-        self.bronto_api_endpoint = os.environ.get(
-            "BRONTO_API_ENDPOINT", "https://api.eu.bronto.io"
-        )
+        self.bronto_api_key = self._require_non_empty_env("BRONTO_API_KEY")
+        self.bronto_api_endpoint = self._require_non_empty_env("BRONTO_API_ENDPOINT")
         self.mcp_transport = self._parse_transport(
             os.environ.get("BRONTO_MCP_TRANSPORT", MCPTransport.STDIO.value)
         )
@@ -36,8 +34,20 @@ class Config:
     @staticmethod
     def _parse_port(raw_port: str) -> int:
         try:
-            return int(raw_port)
+            port = int(raw_port)
         except ValueError as e:
             raise ValueError(
                 f'Invalid BRONTO_MCP_PORT "{raw_port}". Expected an integer.'
             ) from e
+        if port < 1 or port > 65535:
+            raise ValueError(
+                f'Invalid BRONTO_MCP_PORT "{raw_port}". Expected a value between 1 and 65535.'
+            )
+        return port
+
+    @staticmethod
+    def _require_non_empty_env(env_name: str) -> str:
+        raw_value = os.environ.get(env_name)
+        if raw_value is None or raw_value.strip() == "":
+            raise ValueError(f"{env_name} is required and cannot be empty.")
+        return raw_value.strip()
