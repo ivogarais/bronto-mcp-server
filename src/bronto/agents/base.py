@@ -1,62 +1,14 @@
-from enum import Enum
-from typing import Any, Iterable
+from typing import Iterable
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-
-
-class AgentKind(str, Enum):
-    TOOL = "tool"
-
-
-class ToolInputSpec(BaseModel):
-    name: str = Field(description="Input argument name exposed by the tool")
-    value_type: Any = Field(
-        default=Any, description="Python type accepted for this input argument"
-    )
-    required: bool = Field(default=True)
-    description: str = Field(default="")
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    @model_validator(mode="after")
-    def validate_payload(self) -> "ToolInputSpec":
-        if not self.name:
-            raise ValueError("execution.inputs[].name must be set")
-        return self
-
-
-class ToolOutputSpec(BaseModel):
-    value_type: Any = Field(default=Any, description="Python type returned by the tool")
-    description: str = Field(default="")
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-
-class ToolExecutionSpec(BaseModel):
-    inputs: list[ToolInputSpec] = Field(default_factory=list)
-    output: ToolOutputSpec = Field(default_factory=ToolOutputSpec)
-    notes: str = Field(default="")
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    @model_validator(mode="after")
-    def validate_payload(self) -> "ToolExecutionSpec":
-        known_inputs: set[str] = set()
-        for input_spec in self.inputs:
-            if input_spec.name in known_inputs:
-                raise ValueError(f"execution.inputs contains duplicate input: {input_spec.name}")
-            known_inputs.add(input_spec.name)
-        return self
+from pydantic import BaseModel, Field
 
 
 class AgentToolSpec(BaseModel):
     name: str = Field(description="Tool name exposed to MCP clients")
-    handler: str = Field(description="Method name on BrontoTools that implements this spec")
-    kind: AgentKind = Field(default=AgentKind.TOOL)
-    description: str = Field(description="LLM-facing tool description")
-    execution: ToolExecutionSpec = Field(
-        description="Execution contract used for validation and discovery"
+    handler: str = Field(
+        description="Method name on BrontoTools that implements this spec"
     )
+    description: str = Field(description="LLM-facing tool description")
 
 
 class BrontoAgent(BaseModel):
