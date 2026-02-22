@@ -7,8 +7,8 @@ from ..enums import DashboardToolName
 class DashboardAgentSpec(BaseModel):
     description: str = Field(
         default=(
-            "Builds validated Bronto dashboard specs with deterministic layout "
-            "and can launch the bronto TUI renderer."
+            "Builds validated Bronto dashboard specs covering all bronto-cli "
+            "chart families and can launch the bronto TUI renderer."
         )
     )
     tools: list[AgentToolSpec] = Field(
@@ -17,8 +17,8 @@ class DashboardAgentSpec(BaseModel):
                 name=DashboardToolName.BUILD_DASHBOARD_SPEC.value,
                 handler=DashboardToolName.BUILD_DASHBOARD_SPEC.value,
                 description=(
-                    "Build a validated Bronto dashboard spec from a simplified payload "
-                    "(fixed layout, renderer-owned styling)."
+                    "Build a validated Bronto dashboard spec from a structured payload "
+                    "supporting all bronto-cli chart families."
                 ),
             ),
             AgentToolSpec(

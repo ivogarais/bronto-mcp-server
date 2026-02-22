@@ -131,6 +131,7 @@ def test_dashboard_playbook_returns_expected_guidance(runtime):
     playbook = runtime.dashboard_playbook()
 
     assert "Required top-level shape" in playbook
+    assert "charts" in playbook
     assert "bar_charts" in playbook
     assert "tables" in playbook
-    assert "Do NOT use `widgets`, `chart`, or `charts`" in playbook
+    assert "Do NOT use top-level `widgets` or `chart`" in playbook

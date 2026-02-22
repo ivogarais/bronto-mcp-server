@@ -12,7 +12,8 @@ class DashboardTableColumnInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str = Field(
-        description="Column title shown in the table header.",
+        description="Column title shown in the table header"
+        ".",
         min_length=1,
         max_length=16,
     )
@@ -65,7 +66,14 @@ class DashboardTableColumnInput(BaseModel):
 class DashboardBarChartInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(description="Panel title for this bar chart.", min_length=1, max_length=48)
+    title: str = Field(
+        description=(
+            "Specific chart title (max 48 chars). Avoid generic names like "
+            "'Bar Chart 1'; summarize what is being measured."
+        ),
+        min_length=1,
+        max_length=48,
+    )
     labels: list[str] = Field(
         description="Category labels for the bar chart.",
         min_length=1,
@@ -103,10 +111,191 @@ class DashboardBarChartInput(BaseModel):
         return self
 
 
+class DashboardSeriesRefInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1, description="Series name.")
+    variant: Literal["primary", "muted", "danger"] | None = Field(
+        default=None, description="Optional series variant."
+    )
+
+
+class DashboardXYPointInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    x: float
+    y: float
+
+
+class DashboardXYSeriesInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1)
+    points: list[DashboardXYPointInput] = Field(min_length=1)
+
+
+class DashboardTimePointInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    t: str = Field(min_length=1, description="RFC3339 timestamp")
+    v: float
+
+
+class DashboardTimeSeriesInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=1)
+    points: list[DashboardTimePointInput] = Field(min_length=1)
+
+
+class DashboardCandleInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    t: str = Field(min_length=1, description="RFC3339 timestamp")
+    open: float
+    high: float
+    low: float
+    close: float
+
+
+class DashboardHeatCellInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    x: int = Field(ge=0)
+    y: int = Field(ge=0)
+    v: float
+
+
+class DashboardHeatmapDataInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    width: int | None = Field(default=None, ge=1)
+    height: int | None = Field(default=None, ge=1)
+    values: list[float] | None = Field(default=None)
+    cells: list[DashboardHeatCellInput] | None = Field(default=None)
+
+    @model_validator(mode="after")
+    def _validate_shape(self) -> "DashboardHeatmapDataInput":
+        has_dense = bool(self.values)
+        has_sparse = bool(self.cells)
+        if has_dense and has_sparse:
+            raise ValueError("heatmap must define either dense values or sparse cells")
+        if not has_dense and not has_sparse:
+            raise ValueError("heatmap must define dense values or sparse cells")
+        if has_dense:
+            if self.width is None or self.height is None:
+                raise ValueError("dense heatmap requires width and height")
+            expected = self.width * self.height
+            if len(self.values or []) != expected:
+                raise ValueError("dense heatmap values length must equal width*height")
+        return self
+
+
+class DashboardChartInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(
+        description=(
+            "Specific chart title (max 48 chars). Avoid generic names like "
+            "'Bar Chart 1'; describe the signal and scope."
+        ),
+        min_length=1,
+        max_length=48,
+    )
+    family: Literal[
+        "bar",
+        "heatmap",
+        "line",
+        "ohlc",
+        "scatter",
+        "streamline",
+        "timeseries",
+        "waveline",
+        "sparkline",
+    ]
+
+    unit: str | None = None
+    format: Literal["number", "bytes", "duration"] | None = None
+    render_mode: Literal["ascii", "braille"] | None = None
+    show_axis: bool | None = None
+
+    labels: list[str] | None = None
+    values: list[float] | None = None
+    bar_orientation: Literal["horizontal", "vertical"] | None = None
+
+    xy: list[DashboardXYSeriesInput] | None = None
+    line_series: list[DashboardSeriesRefInput] | None = None
+    line_interpolation: Literal["linear", "step"] | None = None
+    line_markers: bool | None = None
+    scatter_point_rune: str | None = None
+    waveline_series: list[DashboardSeriesRefInput] | None = None
+
+    heatmap: DashboardHeatmapDataInput | None = None
+    heatmap_min: float | None = None
+    heatmap_max: float | None = None
+
+    candles: list[DashboardCandleInput] | None = None
+    ohlc_style: Literal["candle", "ohlc"] | None = None
+
+    value: list[float] | None = None
+    streamline_window: int | None = Field(default=None, ge=0)
+    sparkline_window: int | None = Field(default=None, ge=0)
+
+    time: list[DashboardTimeSeriesInput] | None = None
+    timeseries_series: list[DashboardSeriesRefInput] | None = None
+    time_format: str | None = None
+
+    @field_validator("scatter_point_rune")
+    @classmethod
+    def _validate_point_rune(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if len(value) != 1:
+            raise ValueError("scatter_point_rune must be a single character")
+        return value
+
+    @model_validator(mode="after")
+    def _validate_for_family(self) -> "DashboardChartInput":
+        if self.family == "bar":
+            if not self.labels or not self.values:
+                raise ValueError("bar chart requires labels and values")
+            if len(self.labels) != len(self.values):
+                raise ValueError("bar chart labels and values length must match")
+        elif self.family in {"line", "scatter", "waveline"}:
+            if not self.xy:
+                raise ValueError(f"{self.family} chart requires xy dataset")
+        elif self.family == "timeseries":
+            if not self.time:
+                raise ValueError("timeseries chart requires time dataset")
+        elif self.family == "ohlc":
+            if not self.candles:
+                raise ValueError("ohlc chart requires candles dataset")
+        elif self.family == "heatmap":
+            if self.heatmap is None:
+                raise ValueError("heatmap chart requires heatmap dataset")
+            if (
+                self.heatmap_min is not None
+                and self.heatmap_max is not None
+                and self.heatmap_min > self.heatmap_max
+            ):
+                raise ValueError("heatmap_min must be <= heatmap_max")
+        elif self.family in {"streamline", "sparkline"}:
+            if not self.value:
+                raise ValueError(f"{self.family} chart requires value dataset")
+        return self
+
+
 class DashboardTableInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(description="Panel title for this table.", min_length=1, max_length=48)
+    title: str = Field(
+        description=(
+            "Specific table title (max 48 chars). Avoid generic names like "
+            "'Table 1'; describe the rows shown."
+        ),
+        min_length=1,
+        max_length=48,
+    )
     columns: list[DashboardTableColumnInput] = Field(
         description="Table columns definition.",
         min_length=1,
@@ -153,8 +342,16 @@ class DashboardTableInput(BaseModel):
 class DashboardBuildInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(description="Dashboard title.", min_length=1, max_length=64)
+    title: str = Field(
+        description=(
+            "Dashboard title (max 64 chars). Use a concise, descriptive summary "
+            "of the dashboard purpose."
+        ),
+        min_length=1,
+        max_length=64,
+    )
     density: Literal["compact", "comfortable"] = Field(default="comfortable")
+    charts: list[DashboardChartInput] = Field(default_factory=list)
     bar_charts: list[DashboardBarChartInput] = Field(default_factory=list)
     tables: list[DashboardTableInput] = Field(default_factory=list)
 
@@ -168,7 +365,7 @@ class DashboardBuildInput(BaseModel):
 
     @model_validator(mode="after")
     def _validate_has_widgets(self) -> "DashboardBuildInput":
-        if len(self.bar_charts) == 0 and len(self.tables) == 0:
+        if len(self.charts) == 0 and len(self.bar_charts) == 0 and len(self.tables) == 0:
             raise ValueError("dashboard must include at least one chart or table")
         return self
 
@@ -181,23 +378,28 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
     main_row_children: list[dict[str, Any]] = []
     weights: list[int] = []
 
-    for idx, chart in enumerate(payload.bar_charts, start=1):
-        chart_ref = f"barChart{idx}"
-        dataset_ref = f"bar_dataset_{idx}"
-        charts[chart_ref] = {
-            "family": "bar",
-            "datasetRef": dataset_ref,
-            "bar": {"orientation": "horizontal"},
-        }
-        datasets[dataset_ref] = {
-            "kind": "categorySeries",
-            "labels": chart.labels,
-            "values": chart.values,
-        }
+    normalized_charts = list(payload.charts)
+    for chart in payload.bar_charts:
+        normalized_charts.append(
+            DashboardChartInput(
+                title=chart.title,
+                family="bar",
+                labels=chart.labels,
+                values=chart.values,
+                bar_orientation="vertical",
+            )
+        )
+
+    for idx, chart in enumerate(normalized_charts, start=1):
+        chart_ref = f"chart{idx}"
+        dataset_ref = f"chart_dataset_{idx}"
+        charts[chart_ref] = _build_chart_spec(chart, dataset_ref)
+        datasets[dataset_ref] = _build_chart_dataset(chart)
+
         main_row_children.append(
             {
                 "type": "chart",
-                "id": f"bar_panel_{idx}",
+                "id": f"chart_panel_{idx}",
                 "title": chart.title,
                 "chartRef": chart_ref,
             }
@@ -256,6 +458,159 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
         "tables": tables,
         "datasets": datasets,
     }
+
+
+def _build_chart_spec(chart: DashboardChartInput, dataset_ref: str) -> dict[str, Any]:
+    spec: dict[str, Any] = {
+        "title": chart.title,
+        "family": chart.family,
+        "datasetRef": dataset_ref,
+    }
+
+    render: dict[str, Any] = {}
+    if chart.render_mode is not None:
+        render["mode"] = chart.render_mode
+    if chart.show_axis is not None:
+        render["showAxis"] = chart.show_axis
+    if render:
+        spec["render"] = render
+
+    if chart.family == "bar":
+        spec["bar"] = {"orientation": chart.bar_orientation or "vertical"}
+    elif chart.family == "heatmap":
+        heatmap_opts: dict[str, Any] = {}
+        if chart.heatmap_min is not None:
+            heatmap_opts["min"] = chart.heatmap_min
+        if chart.heatmap_max is not None:
+            heatmap_opts["max"] = chart.heatmap_max
+        spec["heatmap"] = heatmap_opts
+    elif chart.family == "line":
+        refs = chart.line_series or _series_refs_from_xy(chart.xy or [])
+        spec["line"] = {
+            "series": [_series_ref_to_spec(ref) for ref in refs],
+            "style": {
+                "interpolation": chart.line_interpolation or "linear",
+                "markers": bool(chart.line_markers),
+            },
+        }
+    elif chart.family == "scatter":
+        scatter: dict[str, Any] = {}
+        if chart.scatter_point_rune is not None:
+            scatter["pointRune"] = chart.scatter_point_rune
+        spec["scatter"] = scatter
+    elif chart.family == "waveline":
+        refs = chart.waveline_series or _series_refs_from_xy(chart.xy or [])
+        spec["waveline"] = {"series": [_series_ref_to_spec(ref) for ref in refs]}
+    elif chart.family == "timeseries":
+        refs = chart.timeseries_series or _series_refs_from_time(chart.time or [])
+        timeseries: dict[str, Any] = {
+            "series": [_series_ref_to_spec(ref) for ref in refs]
+        }
+        if chart.time_format is not None:
+            timeseries["timeFormat"] = chart.time_format
+        spec["timeseries"] = timeseries
+    elif chart.family == "ohlc":
+        spec["ohlc"] = {"style": chart.ohlc_style or "candle"}
+    elif chart.family == "streamline":
+        spec["streamline"] = {"window": chart.streamline_window or 120}
+    elif chart.family == "sparkline":
+        spec["sparkline"] = {"window": chart.sparkline_window or 120}
+
+    return spec
+
+
+def _build_chart_dataset(chart: DashboardChartInput) -> dict[str, Any]:
+    dataset: dict[str, Any] = {}
+
+    if chart.family == "bar":
+        dataset = {
+            "kind": "categorySeries",
+            "labels": chart.labels,
+            "values": chart.values,
+        }
+    elif chart.family in {"line", "scatter", "waveline"}:
+        dataset = {
+            "kind": "xySeries",
+            "xy": [
+                {
+                    "name": series.name,
+                    "points": [{"x": p.x, "y": p.y} for p in series.points],
+                }
+                for series in (chart.xy or [])
+            ],
+        }
+    elif chart.family == "timeseries":
+        dataset = {
+            "kind": "timeSeries",
+            "time": [
+                {
+                    "name": series.name,
+                    "points": [{"t": p.t, "v": p.v} for p in series.points],
+                }
+                for series in (chart.time or [])
+            ],
+        }
+    elif chart.family == "ohlc":
+        dataset = {
+            "kind": "ohlcSeries",
+            "candles": [
+                {
+                    "t": c.t,
+                    "open": c.open,
+                    "high": c.high,
+                    "low": c.low,
+                    "close": c.close,
+                }
+                for c in (chart.candles or [])
+            ],
+        }
+    elif chart.family == "heatmap":
+        heatmap = chart.heatmap
+        assert heatmap is not None
+        heatmap_payload: dict[str, Any] = {}
+        if heatmap.width is not None:
+            heatmap_payload["width"] = heatmap.width
+        if heatmap.height is not None:
+            heatmap_payload["height"] = heatmap.height
+        if heatmap.values is not None:
+            heatmap_payload["values"] = heatmap.values
+        if heatmap.cells is not None:
+            heatmap_payload["cells"] = [
+                {"x": cell.x, "y": cell.y, "v": cell.v} for cell in heatmap.cells
+            ]
+        dataset = {
+            "kind": "heatmapCells",
+            "heatmap": heatmap_payload,
+        }
+    elif chart.family in {"streamline", "sparkline"}:
+        dataset = {
+            "kind": "valueSeries",
+            "value": chart.value,
+        }
+
+    if chart.unit is not None:
+        dataset["unit"] = chart.unit
+    if chart.format is not None:
+        dataset["format"] = chart.format
+
+    return dataset
+
+
+def _series_refs_from_xy(series: list[DashboardXYSeriesInput]) -> list[DashboardSeriesRefInput]:
+    return [DashboardSeriesRefInput(name=s.name, variant="primary") for s in series]
+
+
+def _series_refs_from_time(
+    series: list[DashboardTimeSeriesInput],
+) -> list[DashboardSeriesRefInput]:
+    return [DashboardSeriesRefInput(name=s.name, variant="primary") for s in series]
+
+
+def _series_ref_to_spec(series: DashboardSeriesRefInput) -> dict[str, Any]:
+    out = {"name": series.name}
+    if series.variant is not None:
+        out["variant"] = series.variant
+    return out
 
 
 def _resolve_table_columns(

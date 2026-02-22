@@ -26,7 +26,7 @@ class DashboardToolHandlers:
             Field(
                 description=(
                     "Structured dashboard payload following DashboardBuildInput "
-                    "({title, density?, bar_charts?, tables?})."
+                    "({title, density?, charts?, bar_charts?, tables?})."
                 )
             ),
         ],
@@ -44,7 +44,7 @@ class DashboardToolHandlers:
             Field(
                 description=(
                     "Structured dashboard payload following DashboardBuildInput "
-                    "({title, density?, bar_charts?, tables?})."
+                    "({title, density?, charts?, bar_charts?, tables?})."
                 )
             ),
         ],
@@ -181,7 +181,7 @@ def _coerce_payload(payload: DashboardBuildInput | dict[str, Any]) -> DashboardB
     except ValidationError as exc:
         raise ValueError(
             "Invalid dashboard payload. Top-level shape must be: "
-            "{title, density?, bar_charts?, tables?}. "
+            "{title, density?, charts?, bar_charts?, tables?}. "
             "Use `dashboard_playbook` for exact examples. "
             f"Validation details: {exc}"
         ) from exc

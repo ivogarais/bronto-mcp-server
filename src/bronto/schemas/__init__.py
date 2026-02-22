@@ -38,6 +38,7 @@ from .admin import (
 from .dashboard import (
     DashboardBarChartInput,
     DashboardBuildInput,
+    DashboardChartInput,
     DashboardTableColumnInput,
     DashboardTableInput,
     build_bronto_app_spec,
@@ -83,6 +84,7 @@ __all__ = [
     "SearchStatusInput",
     "UsageQueryInput",
     "DashboardBarChartInput",
+    "DashboardChartInput",
     "DashboardBuildInput",
     "DashboardTableColumnInput",
     "DashboardTableInput",

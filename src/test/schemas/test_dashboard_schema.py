@@ -97,3 +97,87 @@ def test_dashboard_column_keys_are_normalized_and_deduplicated():
     columns = spec["tables"][table_ref]["columns"]
     keys = [column["key"] for column in columns]
     assert keys == ["service", "service_2", "message"]
+
+
+def test_dashboard_build_input_supports_all_chart_families():
+    payload = {
+        "title": "All Families",
+        "charts": [
+            {
+                "title": "Bar",
+                "family": "bar",
+                "labels": ["a", "b"],
+                "values": [1, 2],
+            },
+            {
+                "title": "Line",
+                "family": "line",
+                "xy": [{"name": "p95", "points": [{"x": 1, "y": 2}]}],
+            },
+            {
+                "title": "Scatter",
+                "family": "scatter",
+                "xy": [{"name": "p95", "points": [{"x": 1, "y": 2}]}],
+            },
+            {
+                "title": "Waveline",
+                "family": "waveline",
+                "xy": [{"name": "p95", "points": [{"x": 1, "y": 2}]}],
+            },
+            {
+                "title": "Heatmap",
+                "family": "heatmap",
+                "heatmap": {"width": 2, "height": 1, "values": [0.2, 0.8]},
+            },
+            {
+                "title": "OHLC",
+                "family": "ohlc",
+                "candles": [
+                    {
+                        "t": "2026-02-22T12:00:00Z",
+                        "open": 10,
+                        "high": 12,
+                        "low": 9,
+                        "close": 11,
+                    }
+                ],
+            },
+            {"title": "Spark", "family": "sparkline", "value": [1, 2, 3]},
+            {"title": "Stream", "family": "streamline", "value": [1, 2, 3]},
+            {
+                "title": "Time",
+                "family": "timeseries",
+                "time": [
+                    {
+                        "name": "req_rate",
+                        "points": [{"t": "2026-02-22T12:00:00Z", "v": 100}],
+                    }
+                ],
+            },
+        ],
+    }
+
+    spec = build_bronto_app_spec(DashboardBuildInput.model_validate(payload))
+
+    assert set(chart["family"] for chart in spec["charts"].values()) == {
+        "bar",
+        "line",
+        "scatter",
+        "waveline",
+        "heatmap",
+        "ohlc",
+        "sparkline",
+        "streamline",
+        "timeseries",
+    }
+    assert set(chart["title"] for chart in spec["charts"].values()) == {
+        "Bar",
+        "Line",
+        "Scatter",
+        "Waveline",
+        "Heatmap",
+        "OHLC",
+        "Spark",
+        "Stream",
+        "Time",
+    }
