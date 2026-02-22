@@ -62,7 +62,9 @@ def test_serve_dashboard_executes_bronto(monkeypatch, runtime, tmp_path):
     )
 
     spec_path = tmp_path / "dashboard.json"
-    result = runtime.serve_dashboard(_sample_payload(), spec_file_path=str(spec_path))
+    result = runtime.serve_dashboard(
+        _sample_payload(), spec_file_path=str(spec_path), launch_mode="blocking"
+    )
 
     assert command_calls == [
         ["/usr/local/bin/bronto", "serve", "--spec", str(spec_path)]
@@ -79,6 +81,50 @@ def test_serve_dashboard_fails_when_bronto_is_missing(monkeypatch, runtime):
 
     with pytest.raises(RuntimeError, match="Could not find `bronto` in PATH"):
         runtime.serve_dashboard(_sample_payload())
+
+
+def test_serve_dashboard_prepares_command_without_launch(monkeypatch, runtime, tmp_path):
+    subprocess_calls = []
+
+    def _fake_run(command, check):
+        subprocess_calls.append(command)
+        return type("Completed", (), {"returncode": 0})()
+
+    monkeypatch.setattr(
+        "bronto.agents.dashboard.tools.handlers.shutil.which",
+        lambda _: "/usr/local/bin/bronto",
+    )
+    monkeypatch.setattr(
+        "bronto.agents.dashboard.tools.handlers.subprocess.run", _fake_run
+    )
+
+    spec_path = tmp_path / "dashboard.json"
+    result = runtime.serve_dashboard(
+        _sample_payload(), spec_file_path=str(spec_path), launch_mode="none"
+    )
+
+    assert subprocess_calls == []
+    assert result["status"] == "prepared"
+    assert result["command"] == [
+        "/usr/local/bin/bronto",
+        "serve",
+        "--spec",
+        str(spec_path),
+    ]
+    assert result["spec_path"] == str(spec_path)
+    assert result["spec_retained"] is True
+    assert "command_str" in result
+    assert spec_path.exists()
+
+
+def test_serve_dashboard_rejects_invalid_launch_mode(monkeypatch, runtime):
+    monkeypatch.setattr(
+        "bronto.agents.dashboard.tools.handlers.shutil.which",
+        lambda _: "/usr/local/bin/bronto",
+    )
+
+    with pytest.raises(ValueError, match="Invalid launch_mode"):
+        runtime.serve_dashboard(_sample_payload(), launch_mode="async")
 
 
 def test_dashboard_playbook_returns_expected_guidance(runtime):

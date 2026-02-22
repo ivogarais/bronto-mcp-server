@@ -66,6 +66,16 @@ class DashboardToolHandlers:
                 )
             ),
         ] = None,
+        launch_mode: Annotated[
+            str,
+            Field(
+                description=(
+                    "How to handle the Bronto process. "
+                    "`none` (default) only writes spec + returns command. "
+                    "`blocking` executes `bronto serve` and waits for exit."
+                )
+            ),
+        ] = "none",
     ) -> Annotated[
         dict[str, Any],
         Field(
@@ -81,7 +91,32 @@ class DashboardToolHandlers:
 
         bronto_bin = _resolve_bronto_binary()
         command = [bronto_bin, "serve", "--spec", str(spec_path)]
-        logger.info("Launching Bronto dashboard, command=%s", command)
+        normalized_mode = launch_mode.strip().lower()
+        if normalized_mode not in {"none", "blocking"}:
+            raise ValueError(
+                "Invalid launch_mode. Use one of: 'none', 'blocking'."
+            )
+
+        if normalized_mode == "none":
+            logger.info(
+                "Prepared Bronto dashboard spec without launching, command=%s", command
+            )
+            # When not launching, keep the spec by default so callers can run
+            # the returned command in a real terminal session.
+            return {
+                "status": "prepared",
+                "command": command,
+                "command_str": " ".join(command),
+                "spec_path": str(spec_path),
+                "spec_retained": True,
+                "launch_mode": normalized_mode,
+                "note": (
+                    "Interactive TUI launch is not executed in MCP by default. "
+                    "Run `command_str` in your terminal."
+                ),
+            }
+
+        logger.info("Launching Bronto dashboard (blocking), command=%s", command)
 
         try:
             completed = subprocess.run(command, check=False)
@@ -103,9 +138,11 @@ class DashboardToolHandlers:
         return {
             "status": "ok",
             "command": command,
+            "command_str": " ".join(command),
             "spec_path": str(spec_path),
             "spec_retained": retained,
             "exit_code": completed.returncode,
+            "launch_mode": normalized_mode,
         }
 
     @staticmethod

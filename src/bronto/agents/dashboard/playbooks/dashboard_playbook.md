@@ -2,6 +2,12 @@ Dashboard Payload Playbook
 
 Use this playbook before calling `build_dashboard_spec` or `serve_dashboard`.
 
+Serve behavior:
+- `serve_dashboard` defaults to `launch_mode: "none"`.
+- In this mode, it writes the spec file and returns a runnable command.
+- Run the returned `command_str` in a real terminal to open the interactive TUI.
+- Use `launch_mode: "blocking"` only when you explicitly want MCP to wait on `bronto serve`.
+
 Required top-level shape:
 
 ```json
@@ -80,5 +86,38 @@ Quick valid example payload:
       "row_limit": 200
     }
   ]
+}
+```
+
+Example `serve_dashboard` call (recommended):
+
+```json
+{
+  "payload": {
+    "title": "AI Agent Error Dashboard",
+    "density": "comfortable",
+    "bar_charts": [
+      {
+        "title": "Errors by Service",
+        "labels": ["api", "worker", "web", "db"],
+        "values": [120, 80, 60, 20]
+      }
+    ],
+    "tables": [
+      {
+        "title": "Latest Error Rows",
+        "columns": [
+          { "title": "ts", "width": "auto" },
+          { "title": "service", "width": 12 },
+          { "title": "message", "width": "flex" }
+        ],
+        "rows": [
+          ["2026-02-22T12:00:01Z", "api", "NullPointerException"]
+        ]
+      }
+    ]
+  },
+  "spec_file_path": "/tmp/ai-agent-errors.json",
+  "launch_mode": "none"
 }
 ```
