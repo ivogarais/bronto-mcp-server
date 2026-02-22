@@ -1,10 +1,6 @@
 Use this MCP server to interact with Bronto datasets, logs, and statement-id workflows.
 
-Execution guidelines:
-
-- Prefer calling tools instead of guessing values or data.
-- Use playbook tools whenever a workflow has multiple steps or strict formatting expectations.
-- IMPORTANT when a user asks For terminal reports/tables, use `terminal_report_playbook` before formatting final output.
+Important to remember and crucial to your operations within this mcp server everytime a user asks for a request before doing the request you must check the playbooks that you feel are relevant to this request and related to the tools. You are striclty prohibited from running until you checked the relevant playbooks.
 
 Available agents:
 ${agent_catalog}
