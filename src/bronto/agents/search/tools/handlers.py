@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BeforeValidator, Field
 from typing_extensions import Annotated
@@ -144,9 +144,11 @@ class SearchToolHandlers:
         ] = "",
         group_by_keys: Annotated[
             Optional[List[str]],
+            BeforeValidator(lambda value: SearchToolHandlers._normalize_group_by_keys(value)),
             Field(
                 description="List of keys expected to be present in log datasets and "
-                "by which the metric computed should be grouped"
+                "by which the metric computed should be grouped. A single key string "
+                "or comma-separated string is normalized to a list."
             ),
         ] = None,
     ) -> Annotated[
@@ -157,8 +159,7 @@ class SearchToolHandlers:
             "represents the value of the computed metrics for a subset of the provided time range"
         ),
     ]:
-        if group_by_keys is None:
-            group_by_keys = []
+        group_by_keys = self._normalize_group_by_keys(group_by_keys) or []
         logger.info(
             "timerange_start=%s, timerange_end=%s, log_ids=%s, metric_functions=%s, group_by_keys=[%s]",
             timerange_start,
@@ -198,6 +199,23 @@ class SearchToolHandlers:
             timeseries = Timeseries(count=group_serie["count"], timeseries=datapoints)
             result[group_serie["name"]] = timeseries
         return result
+
+    @staticmethod
+    def _normalize_group_by_keys(value: Any) -> Optional[List[str]]:
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return [part.strip() for part in value.split(",") if part.strip()]
+        if isinstance(value, list):
+            normalized: List[str] = []
+            for item in value:
+                if not isinstance(item, str):
+                    raise ValueError("group_by_keys must contain only strings.")
+                trimmed = item.strip()
+                if trimmed:
+                    normalized.append(trimmed)
+            return normalized
+        raise ValueError("group_by_keys must be a list of strings or a string.")
 
     @staticmethod
     def _validate_input_time(input_time: str) -> str:
@@ -248,18 +266,4 @@ class SearchToolHandlers:
     ]:
         return resolve_playbook(
             "bronto.agents.search", "playbooks/compute_metrics_playbook.md"
-        )
-
-    @staticmethod
-    def terminal_report_playbook() -> Annotated[
-        str,
-        Field(
-            description=(
-                "Playbook for terminal-native report rendering with deterministic "
-                "ASCII table format."
-            )
-        ),
-    ]:
-        return resolve_playbook(
-            "bronto.agents.search", "playbooks/terminal_report_playbook.md"
         )

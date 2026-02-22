@@ -1,6 +1,7 @@
 from bronto.agents.datasets import DatasetsAgent
 from bronto.agents.search import SearchAgent
 from bronto.agents.statement_ids import StatementIdsAgent
+from bronto.agents.terminal_reports import TerminalReportsAgent
 
 
 def test_datasets_agent_contract():
@@ -32,7 +33,6 @@ def test_search_agent_contract():
         "get_current_time",
         "search_logs_playbook",
         "compute_metrics_playbook",
-        "terminal_report_playbook",
     }
 
 
@@ -49,4 +49,17 @@ def test_statement_ids_agent_contract():
         "inject_stmt_ids",
         "extract_stmt_ids",
         "update_stmt_ids",
+    }
+
+
+def test_terminal_reports_agent_contract():
+    agent = TerminalReportsAgent()
+    tool_names = {tool.name for tool in agent.tools}
+
+    assert agent.name == "terminal_reports"
+    assert "ASCII reports" in agent.description
+    assert tool_names == {
+        "render_ascii_table",
+        "validate_terminal_report",
+        "terminal_report_playbook",
     }

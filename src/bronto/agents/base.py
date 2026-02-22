@@ -2,14 +2,10 @@ from typing import Iterable
 
 from pydantic import BaseModel, Field
 
-from .playbooks import compose_playbook
-
 
 class AgentToolSpec(BaseModel):
     name: str = Field(description="Tool name exposed to MCP clients")
-    handler: str = Field(
-        description="Method name on BrontoRuntime that implements this spec"
-    )
+    handler: str = Field(description="Method name on BrontoRuntime that implements this spec")
     description: str = Field(description="LLM-facing tool description")
 
 
@@ -28,14 +24,12 @@ class BrontoAgentRegistry(BaseModel):
                 yield tool
 
     def build_instructions(self) -> str:
-        lines: list[str] = []
+        lines = [
+            "Use this MCP server to interact with Bronto datasets and log data.",
+            "Available agents:",
+        ]
         for agent in self.agents:
             lines.append(f"- {agent.name}: {agent.description}")
             for tool in agent.tools:
                 lines.append(f"  - {tool.name}: {tool.description}")
-
-        return compose_playbook(
-            "bronto.agents",
-            "system/system_prompt.md",
-            agent_catalog="\n".join(lines),
-        )
+        return "\n".join(lines)

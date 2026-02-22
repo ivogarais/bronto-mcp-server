@@ -2,6 +2,7 @@ from bronto.agents import BrontoAgentRegistry
 from bronto.agents.datasets.tools import DatasetsToolHandlers
 from bronto.agents.search.tools import SearchToolHandlers
 from bronto.agents.statement_ids.tools import StatementIdsToolHandlers
+from bronto.agents.terminal_reports.tools import TerminalReportsToolHandlers
 from bronto.clients import BrontoClient
 
 
@@ -9,6 +10,7 @@ class BrontoRuntime(
     SearchToolHandlers,
     DatasetsToolHandlers,
     StatementIdsToolHandlers,
+    TerminalReportsToolHandlers,
 ):
     """Registers MCP tools and exposes all Bronto handlers."""
 

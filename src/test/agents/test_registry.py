@@ -4,7 +4,7 @@ from bronto.agents import build_agent_registry
 def test_build_agent_registry_contains_all_agents():
     registry = build_agent_registry()
     names = {agent.name for agent in registry.agents}
-    assert names == {"search", "datasets", "statement_ids"}
+    assert names == {"search", "datasets", "statement_ids", "terminal_reports"}
 
 
 def test_registered_tools_have_unique_names_and_match_handlers():
@@ -16,7 +16,7 @@ def test_registered_tools_have_unique_names_and_match_handlers():
     assert all(tool.name == tool.handler for tool in tools)
 
 
-def test_registry_instructions_include_system_prompt_scaffold():
+def test_registry_instructions_include_scaffold():
     registry = build_agent_registry()
 
     instructions = registry.build_instructions()

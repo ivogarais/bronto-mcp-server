@@ -107,6 +107,8 @@ def test_playbook_prompts_are_registered():
     assert "datasets_playbook" in tool_names
     assert "search_logs_playbook" in tool_names
     assert "compute_metrics_playbook" in tool_names
+    assert "render_ascii_table" in tool_names
+    assert "validate_terminal_report" in tool_names
     assert "terminal_report_playbook" in tool_names
     assert "statement_ids_playbook" in tool_names
 
@@ -146,9 +148,9 @@ def test_statement_ids_playbook_prompt(bronto_tools):
 def test_terminal_report_playbook_prompt(bronto_tools):
     prompt = bronto_tools.terminal_report_playbook()
 
-    assert "Do not use Markdown tables" in prompt
-    assert "ASCII table contract" in prompt
-    assert "Exact Origin Code Lines" in prompt
+    assert "Required flow" in prompt
+    assert "render_ascii_table" in prompt
+    assert "validate_terminal_report" in prompt
 
 
 def test_get_key_values(bronto_tools, mock_bronto_client):
@@ -264,3 +266,76 @@ def test_compute_metrics_single_group(bronto_tools, mock_bronto_client):
     assert mock_bronto_client.search_post.call_args.kwargs["group_by_keys"] == [
         "some_key"
     ]
+
+
+def test_compute_metrics_group_by_keys_string_is_normalized_to_list(
+    bronto_tools, mock_bronto_client
+):
+    mock_bronto_client.search_post.return_value = {"groups_series": []}
+
+    bronto_tools.compute_metrics(
+        log_ids=["test_log_id"],
+        metric_functions=["COUNT(*)"],
+        timerange_start=int(time.time()) * 1000,
+        timerange_end=int(time.time()) * 1000,
+        group_by_keys="event.status",
+    )
+
+    assert mock_bronto_client.search_post.call_args.kwargs["group_by_keys"] == [
+        "event.status"
+    ]
+
+
+def test_compute_metrics_group_by_keys_csv_string_is_split(
+    bronto_tools, mock_bronto_client
+):
+    mock_bronto_client.search_post.return_value = {"groups_series": []}
+
+    bronto_tools.compute_metrics(
+        log_ids=["test_log_id"],
+        metric_functions=["COUNT(*)"],
+        timerange_start=int(time.time()) * 1000,
+        timerange_end=int(time.time()) * 1000,
+        group_by_keys="event.status, event.type",
+    )
+
+    assert mock_bronto_client.search_post.call_args.kwargs["group_by_keys"] == [
+        "event.status",
+        "event.type",
+    ]
+
+
+def test_render_ascii_table_outputs_result_object(bronto_tools):
+    rendered = bronto_tools.render_ascii_table(
+        columns=["Severity", "Count"],
+        rows=[{"Severity": "High", "Count": 4}],
+        max_width=80,
+    )
+
+    assert rendered.column_count == 2
+    assert rendered.row_count == 1
+    assert rendered.line_count > 0
+    assert "+----------+" in rendered.table or "| Severity " in rendered.table
+
+
+def test_validate_terminal_report_detects_violations(bronto_tools):
+    report_text = "| a | b |\n|---|---|\n" + ("x" * 120)
+
+    result = bronto_tools.validate_terminal_report(report_text, max_width=100)
+
+    assert result.valid is False
+    assert any("Markdown table separator" in item for item in result.violations)
+    assert any("exceeds max width" in item for item in result.violations)
+
+
+def test_validate_terminal_report_accepts_ascii_rendered_output(bronto_tools):
+    rendered = bronto_tools.render_ascii_table(
+        columns=["Type", "Count"],
+        rows=[{"Type": "Error", "Count": 2}],
+        max_width=80,
+    )
+
+    result = bronto_tools.validate_terminal_report(rendered.table, max_width=80)
+
+    assert result.valid is True
+    assert result.violations == []

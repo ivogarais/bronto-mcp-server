@@ -44,12 +44,5 @@ class SearchAgentSpec(BaseModel):
                 handler=SearchToolName.COMPUTE_METRICS_PLAYBOOK.value,
                 description="Playbook for robust metric computation workflow.",
             ),
-            AgentToolSpec(
-                name=SearchToolName.TERMINAL_REPORT_PLAYBOOK.value,
-                handler=SearchToolName.TERMINAL_REPORT_PLAYBOOK.value,
-                description=(
-                    "Playbook defining strict terminal-safe report rendering (ASCII-only layout, no markdown tables)."
-                ),
-            ),
         ]
     )
