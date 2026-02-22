@@ -65,9 +65,7 @@ class DashboardTableColumnInput(BaseModel):
 class DashboardBarChartInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(
-        description="Panel title for this bar chart.", min_length=1, max_length=48
-    )
+    title: str = Field(description="Panel title for this bar chart.", min_length=1, max_length=48)
     labels: list[str] = Field(
         description="Category labels for the bar chart.",
         min_length=1,
@@ -108,9 +106,7 @@ class DashboardBarChartInput(BaseModel):
 class DashboardTableInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    title: str = Field(
-        description="Panel title for this table.", min_length=1, max_length=48
-    )
+    title: str = Field(description="Panel title for this table.", min_length=1, max_length=48)
     columns: list[DashboardTableColumnInput] = Field(
         description="Table columns definition.",
         min_length=1,
@@ -314,11 +310,7 @@ def _dedupe_key(base_key: str, used_keys: set[str], idx: int) -> str:
         suffix = f"_{suffix_counter}"
         candidate = f"{base_key[: 24 - len(suffix)]}{suffix}"
         candidate = candidate.rstrip("_")
-        if (
-            candidate
-            and candidate not in used_keys
-            and _COLUMN_KEY_PATTERN.match(candidate)
-        ):
+        if candidate and candidate not in used_keys and _COLUMN_KEY_PATTERN.match(candidate):
             return candidate
         suffix_counter += 1
         if suffix_counter > 999:
