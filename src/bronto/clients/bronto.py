@@ -113,7 +113,7 @@ class BrontoClient:
             logger.error(error_log_message, exc_info=True)
             raise BrontoResponseDecodingException(decoding_error_message) from e
 
-    def get_datasets(self):
+    def get_datasets(self) -> List[Dict[str, Any]]:
         response = self._request(
             "GET",
             "/logs",
@@ -132,9 +132,9 @@ class BrontoClient:
         timestamp_start: int,
         timestamp_end: int,
         log_ids: list[str],
-        where="",
-        _select=None,
-        group_by_keys=None,
+        where: str = "",
+        _select: Optional[List[str]] = None,
+        group_by_keys: Optional[List[str]] = None,
     ) -> List[LogEvent]:
         if group_by_keys is None:
             group_by_keys = []
@@ -170,10 +170,10 @@ class BrontoClient:
         timestamp_start: int,
         timestamp_end: int,
         log_ids: list[str],
-        where="",
-        _select=None,
-        group_by_keys=None,
-    ):
+        where: str = "",
+        _select: Optional[List[str]] = None,
+        group_by_keys: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
         if group_by_keys is None:
             group_by_keys = []
         if _select is None:
@@ -199,7 +199,7 @@ class BrontoClient:
             decoding_error_message="Unexpected format for retrieved data",
         )
 
-    def get_top_keys(self, log_id) -> Dict[str, List[str]]:
+    def get_top_keys(self, log_id: str) -> Dict[str, List[str]]:
         response = self._request(
             "GET",
             "/top-keys",
@@ -278,7 +278,7 @@ class BrontoClient:
                 return dataset_key
         return None
 
-    def get_keys(self, log_id) -> List[DatasetKey]:
+    def get_keys(self, log_id: str) -> List[DatasetKey]:
         top_keys = self.get_top_keys(log_id)
         result = []
         processed_keys = set()
@@ -292,7 +292,9 @@ class BrontoClient:
         return result
 
     @staticmethod
-    def _read_statement_ids_csv(csv_file_path):
+    def _read_statement_ids_csv(
+        csv_file_path: str,
+    ) -> Optional[Dict[str, Dict[str, Any]]]:
         """
         Read the statement IDs CSV file and return a dictionary.
 
@@ -302,7 +304,7 @@ class BrontoClient:
         Returns:
             dict: Dictionary with statement_id as key and log_statement as value
         """
-        statement_ids = {}
+        statement_ids: Dict[str, Dict[str, Any]] = {}
 
         try:
             with open(csv_file_path, "r", encoding="utf-8") as file:
@@ -350,7 +352,12 @@ class BrontoClient:
             return None
 
     @staticmethod
-    def create_payload(statement_ids_dict, project_id, version, repo_url):
+    def create_payload(
+        statement_ids_dict: Dict[str, Dict[str, Any]],
+        project_id: str,
+        version: str,
+        repo_url: str,
+    ) -> Dict[str, Any]:
         """
         Create the JSON payload in the required format.
         """
@@ -369,7 +376,7 @@ class BrontoClient:
             ],
         }
 
-    def post_statement_ids(self, payload) -> bool:
+    def post_statement_ids(self, payload: Dict[str, Any]) -> bool:
         """
         POST the statement IDs to the API endpoint.
         """
@@ -407,7 +414,15 @@ class BrontoClient:
             logger.exception("Unexpected error while posting statement IDs")
             return False
 
-    def deploy_statements(self, csv_file_path, project_id, version, repo_url) -> Dict:
+    def deploy_statements(
+        self,
+        csv_file_path: str,
+        project_id: str,
+        version: str,
+        repo_url: str,
+    ) -> Dict[str, bool]:
         stmt_ids = self._read_statement_ids_csv(csv_file_path)
+        if stmt_ids is None:
+            return {"success": False}
         payload = self.create_payload(stmt_ids, project_id, version, repo_url)
         return {"success": self.post_statement_ids(payload)}

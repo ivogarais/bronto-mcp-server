@@ -6,6 +6,7 @@ from pydantic import BeforeValidator, Field
 from typing_extensions import Annotated
 
 from bronto.agents.playbooks import resolve_playbook
+from bronto.clients import BrontoClient
 from bronto.logger import module_logger
 from bronto.schemas import Datapoint, LogEvent, Timeseries
 
@@ -14,6 +15,8 @@ logger = module_logger(__name__)
 
 class SearchToolHandlers:
     """Search and metrics handlers exposed as MCP tools."""
+
+    bronto_client: BrontoClient
 
     @staticmethod
     def search_logs_playbook() -> Annotated[
@@ -140,7 +143,7 @@ class SearchToolHandlers:
             ),
         ] = "",
         group_by_keys: Annotated[
-            List[str],
+            Optional[List[str]],
             Field(
                 description="List of keys expected to be present in log datasets and "
                 "by which the metric computed should be grouped"
@@ -231,7 +234,7 @@ class SearchToolHandlers:
     @staticmethod
     def get_current_time() -> (
         Annotated[
-            str, Field(description="the current time in the YYYY-MM-DD HH:mm:ss format")
+            str, Field(description="Current time in the YYYY-MM-DD HH:mm:ss format.")
         ]
     ):
         return datetime.strftime(datetime.now(), "%Y-%m-%d %H:%M:%S")

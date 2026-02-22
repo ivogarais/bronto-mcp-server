@@ -5,16 +5,19 @@ from pydantic import Field
 from typing_extensions import Annotated
 
 from bronto.agents.playbooks import compose_playbook, resolve_playbook
+from bronto.clients import BrontoClient
 
 
 class StatementIdsToolHandlers:
     """Statement ID generation, extraction, and deployment handlers."""
 
+    bronto_client: BrontoClient
+
     @staticmethod
     def create_stmt_id() -> Annotated[
         str,
         Field(
-            description="A statement ID, i.e. a 16 character logn string that can "
+            description="A statement ID, i.e. a 16 character long string that can "
             "be used to uniquely identify a log statement"
         ),
     ]:
@@ -41,7 +44,15 @@ class StatementIdsToolHandlers:
 
     @staticmethod
     def extract_stmt_ids(
-        stmt_id_filepath: str = "statementIds.csv",
+        stmt_id_filepath: Annotated[
+            str,
+            Field(
+                description=(
+                    "Output CSV path for extracted statement IDs and log statements."
+                ),
+                min_length=1,
+            ),
+        ] = "statementIds.csv",
     ) -> Annotated[
         str,
         Field(
@@ -58,7 +69,22 @@ class StatementIdsToolHandlers:
 
     @staticmethod
     def update_stmt_ids(
-        src_path: str, stmt_id_filepath: str = "statementIds.csv"
+        src_path: Annotated[
+            str,
+            Field(
+                description="Source code root path where statement IDs should be managed.",
+                min_length=1,
+            ),
+        ],
+        stmt_id_filepath: Annotated[
+            str,
+            Field(
+                description=(
+                    "CSV path used to store extracted and updated statement ID mappings."
+                ),
+                min_length=1,
+            ),
+        ] = "statementIds.csv",
     ) -> Annotated[
         str,
         Field(
@@ -117,7 +143,7 @@ class StatementIdsToolHandlers:
             ),
         ],
     ) -> Annotated[
-        Dict,
+        Dict[str, bool],
         Field(
             description="Sends to Bronto the list of log statements in this project with "
             "their corresponding statement IDs and returns whether this was "

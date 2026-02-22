@@ -4,11 +4,14 @@ from pydantic import Field
 from typing_extensions import Annotated
 
 from bronto.agents.playbooks import resolve_playbook
+from bronto.clients import BrontoClient
 from bronto.schemas import Dataset
 
 
 class DatasetsToolHandlers:
     """Dataset discovery and metadata handlers exposed as MCP tools."""
+
+    bronto_client: BrontoClient
 
     def get_datasets(
         self,
