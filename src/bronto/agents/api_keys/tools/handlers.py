@@ -30,7 +30,7 @@ class ApiKeysToolHandlers:
         dict[str, Any],
         Field(description="Created API key payload."),
     ]:
-        return self.bronto_client.create_api_key(payload.model_dump())
+        return self.bronto_client.create_api_key(payload.model_dump(exclude_none=True))
 
     def update_api_key(
         self,

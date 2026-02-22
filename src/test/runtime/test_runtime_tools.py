@@ -378,7 +378,20 @@ def test_create_api_key(bronto_tools, mock_bronto_client):
     )
 
     mock_bronto_client.create_api_key.assert_called_once_with(
-        {"name": "prod", "roles": ["SearchApi"], "tags": {}, "expires_at": None}
+        {"name": "prod", "roles": ["SearchApi"], "tags": {}}
+    )
+    assert result == {"id": "k1"}
+
+
+def test_create_api_key_accepts_nested_payload_shape(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_api_key.return_value = {"id": "k1"}
+
+    result = bronto_tools.create_api_key(
+        ApiKeyCreateInput.model_validate({"payload": {"name": "sre-group-key"}})
+    )
+
+    mock_bronto_client.create_api_key.assert_called_once_with(
+        {"name": "sre-group-key", "tags": {}}
     )
     assert result == {"id": "k1"}
 
@@ -762,6 +775,13 @@ def test_create_group(bronto_tools, mock_bronto_client):
     mock_bronto_client.create_group.return_value = {"id": "g1"}
     result = bronto_tools.create_group(GroupCreateInput(payload={"name": "ops"}))
     mock_bronto_client.create_group.assert_called_once_with({"name": "ops"})
+    assert result == {"id": "g1"}
+
+
+def test_create_group_accepts_direct_payload_shape(bronto_tools, mock_bronto_client):
+    mock_bronto_client.create_group.return_value = {"id": "g1"}
+    result = bronto_tools.create_group(GroupCreateInput.model_validate({"name": "sre"}))
+    mock_bronto_client.create_group.assert_called_once_with({"name": "sre"})
     assert result == {"id": "g1"}
 
 

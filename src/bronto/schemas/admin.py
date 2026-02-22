@@ -2,15 +2,16 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ApiKeyCreateInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     name: str = Field(min_length=1, description="API key display name.")
-    roles: list[str] = Field(
-        min_length=1, description="Role identifiers assigned to this API key."
+    roles: list[str] | None = Field(
+        default=None,
+        description="Role identifiers assigned to this API key.",
     )
     tags: dict[str, str] = Field(
         default_factory=dict,
@@ -20,6 +21,20 @@ class ApiKeyCreateInput(BaseModel):
         default=None,
         description="Expiration time as Unix timestamp. If omitted, key does not expire.",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_nested_payload(cls, value: Any) -> Any:
+        # Backward compatibility: allow {"payload": {...}} wrapper.
+        if isinstance(value, dict) and "payload" in value and isinstance(
+            value["payload"], dict
+        ):
+            merged = dict(value["payload"])
+            for key, item in value.items():
+                if key != "payload":
+                    merged[key] = item
+            return merged
+        return value
 
 
 class ApiKeyByIdInput(BaseModel):
@@ -222,6 +237,14 @@ class GroupCreateInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     payload: dict[str, Any] = Field(description="Group creation payload.")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_direct_payload(cls, value: Any) -> Any:
+        # Backward compatibility: allow direct shape {"name": "..."} as payload.
+        if isinstance(value, dict) and "payload" not in value:
+            return {"payload": value}
+        return value
 
 
 class GroupUpdateInput(BaseModel):
