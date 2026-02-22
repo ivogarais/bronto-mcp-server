@@ -22,12 +22,11 @@ class DashboardToolHandlers:
     @staticmethod
     def build_dashboard_spec(
         payload: Annotated[
-            dict[str, Any],
+            DashboardBuildInput,
             Field(
                 description=(
-                    "Simplified dashboard payload. Required shape: "
-                    "{title, density?, bar_charts?, tables?}. "
-                    "Use bar_charts[] and/or tables[] (not widgets/chart)."
+                    "Structured dashboard payload following DashboardBuildInput "
+                    "({title, density?, bar_charts?, tables?})."
                 )
             ),
         ],
@@ -35,18 +34,17 @@ class DashboardToolHandlers:
         dict[str, Any],
         Field(description="A validated full Bronto dashboard spec JSON object."),
     ]:
-        request = _validate_payload(payload)
+        request = _coerce_payload(payload)
         return build_bronto_app_spec(request)
 
     @staticmethod
     def serve_dashboard(
         payload: Annotated[
-            dict[str, Any],
+            DashboardBuildInput,
             Field(
                 description=(
-                    "Simplified dashboard payload. Required shape: "
-                    "{title, density?, bar_charts?, tables?}. "
-                    "Use bar_charts[] and/or tables[] (not widgets/chart)."
+                    "Structured dashboard payload following DashboardBuildInput "
+                    "({title, density?, bar_charts?, tables?})."
                 )
             ),
         ],
@@ -77,7 +75,7 @@ class DashboardToolHandlers:
             )
         ),
     ]:
-        request = _validate_payload(payload)
+        request = _coerce_payload(payload)
         app_spec = build_bronto_app_spec(request)
         spec_path = _write_spec_file(app_spec, spec_file_path)
 
@@ -138,7 +136,9 @@ def _write_spec_file(spec_document: dict[str, Any], spec_file_path: str | None) 
     return path
 
 
-def _validate_payload(payload: dict[str, Any]) -> DashboardBuildInput:
+def _coerce_payload(payload: DashboardBuildInput | dict[str, Any]) -> DashboardBuildInput:
+    if isinstance(payload, DashboardBuildInput):
+        return payload
     try:
         return DashboardBuildInput.model_validate(payload)
     except ValidationError as exc:
