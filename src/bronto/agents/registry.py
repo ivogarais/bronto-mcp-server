@@ -2,7 +2,6 @@ from .base import BrontoAgentRegistry
 from .datasets import DatasetsAgent
 from .search import SearchAgent
 from .statement_ids import StatementIdsAgent
-from .terminal_reports import TerminalReportsAgent
 
 
 def build_agent_registry() -> BrontoAgentRegistry:
@@ -11,6 +10,5 @@ def build_agent_registry() -> BrontoAgentRegistry:
             SearchAgent(),
             DatasetsAgent(),
             StatementIdsAgent(),
-            TerminalReportsAgent(),
         ]
     )
