@@ -249,3 +249,17 @@ class SearchToolHandlers:
         return resolve_playbook(
             "bronto.agents.search", "playbooks/compute_metrics_playbook.md"
         )
+
+    @staticmethod
+    def terminal_report_playbook() -> Annotated[
+        str,
+        Field(
+            description=(
+                "Playbook for terminal-native report rendering with deterministic "
+                "ASCII table format."
+            )
+        ),
+    ]:
+        return resolve_playbook(
+            "bronto.agents.search", "playbooks/terminal_report_playbook.md"
+        )

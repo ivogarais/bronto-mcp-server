@@ -12,3 +12,4 @@ class SearchToolName(str, Enum):
     GET_CURRENT_TIME = "get_current_time"
     SEARCH_LOGS_PLAYBOOK = "search_logs_playbook"
     COMPUTE_METRICS_PLAYBOOK = "compute_metrics_playbook"
+    TERMINAL_REPORT_PLAYBOOK = "terminal_report_playbook"

@@ -32,6 +32,7 @@ def test_search_agent_contract():
         "get_current_time",
         "search_logs_playbook",
         "compute_metrics_playbook",
+        "terminal_report_playbook",
     }
 
 

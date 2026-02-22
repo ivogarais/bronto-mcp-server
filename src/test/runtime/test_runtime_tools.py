@@ -107,6 +107,7 @@ def test_playbook_prompts_are_registered():
     assert "datasets_playbook" in tool_names
     assert "search_logs_playbook" in tool_names
     assert "compute_metrics_playbook" in tool_names
+    assert "terminal_report_playbook" in tool_names
     assert "statement_ids_playbook" in tool_names
 
 
@@ -140,6 +141,14 @@ def test_statement_ids_playbook_prompt(bronto_tools):
     assert "create_stmt_id" in prompt
     assert "inject_stmt_ids" in prompt
     assert "deploy_statements" in prompt
+
+
+def test_terminal_report_playbook_prompt(bronto_tools):
+    prompt = bronto_tools.terminal_report_playbook()
+
+    assert "Do not use Markdown tables" in prompt
+    assert "ASCII table contract" in prompt
+    assert "Exact Origin Code Lines" in prompt
 
 
 def test_get_key_values(bronto_tools, mock_bronto_client):
