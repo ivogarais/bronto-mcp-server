@@ -14,3 +14,12 @@ def test_registered_tools_have_unique_names_and_match_handlers():
 
     assert len(names) == len(set(names))
     assert all(tool.name == tool.handler for tool in tools)
+
+
+def test_registry_instructions_include_system_prompt_scaffold():
+    registry = build_agent_registry()
+
+    instructions = registry.build_instructions()
+
+    assert "Use this MCP server to interact with Bronto datasets" in instructions
+    assert "Available agents:" in instructions

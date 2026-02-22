@@ -27,6 +27,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
+"bronto.agents" = ["system/*.md"]
 "bronto.agents.datasets" = ["playbooks/*.md"]
 "bronto.agents.search" = ["playbooks/*.md"]
 "bronto.agents.statement_ids" = ["playbooks/*.md"]
