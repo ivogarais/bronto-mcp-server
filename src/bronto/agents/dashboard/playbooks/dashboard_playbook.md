@@ -7,6 +7,7 @@ Serve behavior:
 - In this mode, it writes the spec file and returns a runnable command.
 - Run the returned `command_str` in a real terminal to open the interactive TUI.
 - Use `launch_mode: "blocking"` only when you explicitly want MCP to wait on `bronto serve`.
+- `bronto-cli` live auto-refresh is enabled by default at a tuned interval.
 
 Required top-level shape:
 
