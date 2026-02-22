@@ -1070,6 +1070,7 @@ class BrontoClient:
         timestamp_end: int,
         log_ids: list[str],
         where: str = "",
+        limit: int | None = None,
         _select: Optional[List[str]] = None,
         group_by_keys: Optional[List[str]] = None,
     ) -> List[LogEvent]:
@@ -1081,6 +1082,8 @@ class BrontoClient:
         query_params.append(("from_ts", timestamp_start))
         query_params.append(("to_ts", timestamp_end))
         query_params.append(("where", where))
+        if limit is not None:
+            query_params.append(("limit", limit))
         query_params.extend([("select", selected_field) for selected_field in _select])
         query_params.extend([("groups", group_key) for group_key in group_by_keys])
 

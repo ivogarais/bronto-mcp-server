@@ -226,6 +226,21 @@ def test_search_logs(bronto_tools, mock_bronto_client):
     assert log_event2 in log_events
 
 
+def test_search_logs_with_limit(bronto_tools, mock_bronto_client):
+    mock_bronto_client.search.return_value = []
+
+    bronto_tools.search_logs(
+        SearchLogsInput(
+            log_ids=["test_log_id"],
+            timerange_start=int(time.time()) * 1000,
+            timerange_end=int(time.time()) * 1000,
+            limit=500,
+        )
+    )
+
+    assert mock_bronto_client.search.call_args.args[4] == 500
+
+
 def test_compute_metrics_no_group(bronto_tools, mock_bronto_client):
     timestamp = BrontoRuntime.get_timestamp_as_unix_epoch("2023-01-01 00:00:00")
     mock_response = {

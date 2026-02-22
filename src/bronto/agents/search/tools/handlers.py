@@ -69,6 +69,7 @@ class SearchToolHandlers:
             timerange_end,
             payload.log_ids,
             payload.search_filter or "",
+            payload.limit,
             _select=["*", "@raw"],
         )
         return log_events

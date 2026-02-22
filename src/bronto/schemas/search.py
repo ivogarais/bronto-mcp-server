@@ -87,6 +87,11 @@ class SearchLogsInput(BaseModel):
             "string values single-quoted."
         ),
     )
+    limit: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description="Optional maximum number of events to return.",
+    )
 
 
 class ComputeMetricsInput(BaseModel):
