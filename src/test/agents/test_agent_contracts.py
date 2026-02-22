@@ -1,3 +1,4 @@
+from bronto.agents.dashboard import DashboardAgent
 from bronto.agents.datasets import DatasetsAgent
 from bronto.agents.search import SearchAgent
 from bronto.agents.statement_ids import StatementIdsAgent
@@ -48,4 +49,16 @@ def test_statement_ids_agent_contract():
         "inject_stmt_ids",
         "extract_stmt_ids",
         "update_stmt_ids",
+    }
+
+
+def test_dashboard_agent_contract():
+    agent = DashboardAgent()
+    tool_names = {tool.name for tool in agent.tools}
+
+    assert agent.name == "dashboard"
+    assert "dashboard specs" in agent.description
+    assert tool_names == {
+        "build_dashboard_spec",
+        "serve_dashboard",
     }
