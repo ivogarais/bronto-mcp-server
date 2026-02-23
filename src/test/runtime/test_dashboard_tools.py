@@ -45,9 +45,32 @@ def _sample_payload() -> dict:
     }
 
 
+def _sample_timeseries_payload() -> dict:
+    return {
+        "title": "AI Agent SRE Essentials",
+        "charts": [
+            {
+                "title": "Req Volume (30m)",
+                "family": "timeseries",
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                    "group_by_keys": [],
+                    "lookback_sec": 1800,
+                    "limit": 200,
+                },
+            }
+        ],
+        "tables": [],
+    }
+
+
 @pytest.fixture
 def runtime() -> BrontoRuntime:
     client = Mock(spec=BrontoClient)
+    client.search_post.return_value = {"totals": {"count": 0, "timeseries": []}}
+    client.search.return_value = []
     return BrontoRuntime(client, build_agent_registry())
 
 
@@ -147,3 +170,37 @@ def test_dashboard_playbook_returns_expected_guidance(runtime):
     assert "charts" in playbook
     assert "tables" in playbook
     assert "Do NOT use top-level `widgets` or `chart`" in playbook
+
+
+def test_serve_dashboard_hydrates_live_timeseries_seed_data(monkeypatch, runtime, tmp_path):
+    monkeypatch.setattr(
+        "bronto.agents.dashboard.tools.handlers.shutil.which",
+        lambda _: "/usr/local/bin/bronto",
+    )
+    runtime.bronto_client.search_post.return_value = {
+        "totals": {
+            "count": 42,
+            "timeseries": [
+                {
+                    "@timestamp": 1771802470000,
+                    "count": 42,
+                    "quantiles": {},
+                    "value": 42,
+                }
+            ],
+        }
+    }
+
+    spec_path = tmp_path / "dashboard.json"
+    result = runtime.serve_dashboard(
+        _sample_timeseries_payload(),
+        spec_file_path=str(spec_path),
+        launch_mode="none",
+    )
+
+    assert result["status"] == "prepared"
+    spec = spec_path.read_text(encoding="utf-8")
+    assert '"family": "timeseries"' in spec
+    assert '"series": [' in spec
+    assert '"name": "total"' in spec
+    assert '"points": [' in spec

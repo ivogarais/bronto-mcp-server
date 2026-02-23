@@ -3,6 +3,8 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -37,8 +39,8 @@ class DashboardToolHandlers:
         request = _coerce_payload(payload)
         return build_bronto_app_spec(request)
 
-    @staticmethod
     def serve_dashboard(
+        self,
         payload: Annotated[
             DashboardBuildInput,
             Field(
@@ -87,6 +89,7 @@ class DashboardToolHandlers:
     ]:
         request = _coerce_payload(payload)
         app_spec = build_bronto_app_spec(request)
+        _hydrate_live_seed_data(self.bronto_client, app_spec)
         spec_path = _write_spec_file(app_spec, spec_file_path)
 
         bronto_bin = _resolve_bronto_binary()
@@ -204,3 +207,279 @@ def _resolve_bronto_binary() -> str:
             "Could not find `bronto` in PATH. Install Bronto CLI or set BRONTO_BIN to the full binary path."
         )
     return resolved
+
+
+def _hydrate_live_seed_data(bronto_client: Any, app_spec: dict[str, Any]) -> None:
+    datasets = app_spec.get("datasets", {})
+    if not isinstance(datasets, dict):
+        return
+
+    now_ms = int(time.time() * 1000)
+    for dataset_id, dataset in datasets.items():
+        if not isinstance(dataset, dict):
+            continue
+        live = dataset.get("liveQuery")
+        if not isinstance(live, dict):
+            continue
+
+        mode = str(live.get("mode") or "metrics").strip().lower()
+        log_ids = live.get("logIds") or []
+        if not isinstance(log_ids, list) or len(log_ids) == 0:
+            continue
+
+        lookback_sec = int(live.get("lookbackSec") or 1800)
+        start_ms = now_ms - max(30, lookback_sec) * 1000
+        end_ms = now_ms
+
+        try:
+            if mode == "metrics":
+                _hydrate_metrics_dataset(
+                    bronto_client=bronto_client,
+                    dataset=dataset,
+                    live_query=live,
+                    start_ms=start_ms,
+                    end_ms=end_ms,
+                )
+            elif mode == "logs":
+                _hydrate_logs_dataset(
+                    bronto_client=bronto_client,
+                    dataset=dataset,
+                    live_query=live,
+                    start_ms=start_ms,
+                    end_ms=end_ms,
+                )
+        except Exception as exc:  # pragma: no cover - best-effort hydration
+            logger.warning(
+                "Live seed hydration failed for dataset %s: %s",
+                dataset_id,
+                exc,
+            )
+
+    _backfill_chart_series_refs(app_spec, now_ms)
+
+
+def _hydrate_metrics_dataset(
+    bronto_client: Any,
+    dataset: dict[str, Any],
+    live_query: dict[str, Any],
+    start_ms: int,
+    end_ms: int,
+) -> None:
+    response = bronto_client.search_post(
+        timestamp_start=start_ms,
+        timestamp_end=end_ms,
+        log_ids=live_query.get("logIds") or [],
+        where=live_query.get("searchFilter") or "",
+        _select=live_query.get("metricFunctions") or ["COUNT(*)"],
+        group_by_keys=live_query.get("groupByKeys") or [],
+    )
+    groups = _extract_metric_groups(response)
+
+    kind = str(dataset.get("kind") or "")
+    if kind == "timeSeries":
+        time_series: list[dict[str, Any]] = []
+        for group in groups:
+            points = [
+                {"t": _ms_to_rfc3339(point.get("@timestamp"), end_ms), "v": _as_float(point.get("value"))}
+                for point in group.get("timeseries", [])
+                if isinstance(point, dict)
+            ]
+            if len(points) == 0:
+                points = [{"t": _ms_to_rfc3339(end_ms, end_ms), "v": 0.0}]
+            time_series.append({"name": group.get("name") or "total", "points": points})
+        if len(time_series) == 0:
+            time_series = [{"name": "total", "points": [{"t": _ms_to_rfc3339(end_ms, end_ms), "v": 0.0}]}]
+        dataset["time"] = time_series
+        return
+
+    if kind == "xySeries":
+        xy_series: list[dict[str, Any]] = []
+        for group in groups:
+            points = []
+            for idx, point in enumerate(group.get("timeseries", []), start=1):
+                if not isinstance(point, dict):
+                    continue
+                ts_ms = _as_int(point.get("@timestamp"))
+                x = float(ts_ms / 1000.0) if ts_ms > 0 else float(idx)
+                points.append({"x": x, "y": _as_float(point.get("value"))})
+            if len(points) == 0:
+                points = [{"x": float(end_ms / 1000.0), "y": 0.0}]
+            xy_series.append({"name": group.get("name") or "total", "points": points})
+        if len(xy_series) == 0:
+            xy_series = [{"name": "total", "points": [{"x": float(end_ms / 1000.0), "y": 0.0}]}]
+        dataset["xy"] = xy_series
+        return
+
+    if kind == "categorySeries":
+        labels: list[str] = []
+        values: list[float] = []
+        for group in groups:
+            labels.append(str(group.get("name") or "total"))
+            values.append(_latest_metric_value(group.get("timeseries", [])))
+        dataset["labels"] = labels
+        dataset["values"] = values
+        return
+
+    if kind == "valueSeries":
+        total_group = groups[0] if groups else {"timeseries": []}
+        values = [_as_float(point.get("value")) for point in total_group.get("timeseries", []) if isinstance(point, dict)]
+        if len(values) == 0:
+            values = [0.0]
+        dataset["value"] = values
+        return
+
+    if kind == "table":
+        rows: list[list[str]] = []
+        columns = dataset.get("columns") or []
+        for group in groups:
+            row_map = {
+                "group": str(group.get("name") or ""),
+                "value": str(_latest_metric_value(group.get("timeseries", []))),
+                "count": str(_as_float(group.get("count"))),
+            }
+            rows.append([str(row_map.get(col, "")) for col in columns])
+        dataset["rows"] = rows
+
+
+def _hydrate_logs_dataset(
+    bronto_client: Any,
+    dataset: dict[str, Any],
+    live_query: dict[str, Any],
+    start_ms: int,
+    end_ms: int,
+) -> None:
+    events = bronto_client.search(
+        timestamp_start=start_ms,
+        timestamp_end=end_ms,
+        log_ids=live_query.get("logIds") or [],
+        where=live_query.get("searchFilter") or "",
+        limit=live_query.get("limit") or 100,
+        _select=["*", "@raw"],
+        group_by_keys=[],
+    )
+    columns = dataset.get("columns") or []
+    rows: list[list[str]] = []
+    for event in events:
+        attributes = getattr(event, "attributes", {}) or {}
+        row: list[str] = []
+        for column in columns:
+            if column == "time":
+                row.append(str(attributes.get("@time", "")))
+            else:
+                row.append(str(attributes.get(column, "")))
+        rows.append(row)
+    dataset["rows"] = rows
+
+
+def _extract_metric_groups(response: Any) -> list[dict[str, Any]]:
+    if not isinstance(response, dict):
+        return []
+    groups = response.get("groups_series")
+    if isinstance(groups, list) and len(groups) > 0:
+        out: list[dict[str, Any]] = []
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            out.append(
+                {
+                    "name": str(group.get("name") or "group"),
+                    "timeseries": group.get("timeseries") or [],
+                    "count": group.get("count") or 0,
+                }
+            )
+        return out
+    totals = response.get("totals") or {}
+    if isinstance(totals, dict):
+        return [
+            {
+                "name": "total",
+                "timeseries": totals.get("timeseries") or [],
+                "count": totals.get("count") or 0,
+            }
+        ]
+    return []
+
+
+def _backfill_chart_series_refs(app_spec: dict[str, Any], now_ms: int) -> None:
+    charts = app_spec.get("charts", {})
+    datasets = app_spec.get("datasets", {})
+    if not isinstance(charts, dict) or not isinstance(datasets, dict):
+        return
+
+    for chart in charts.values():
+        if not isinstance(chart, dict):
+            continue
+        if chart.get("family") != "timeseries":
+            continue
+        dataset_ref = chart.get("datasetRef")
+        dataset = datasets.get(dataset_ref) if isinstance(dataset_ref, str) else None
+        if not isinstance(dataset, dict):
+            continue
+
+        time_series = dataset.get("time")
+        if not isinstance(time_series, list) or len(time_series) == 0:
+            dataset["time"] = [
+                {
+                    "name": "total",
+                    "points": [{"t": _ms_to_rfc3339(now_ms, now_ms), "v": 0.0}],
+                }
+            ]
+            time_series = dataset["time"]
+
+        timeseries_opts = chart.get("timeseries")
+        if not isinstance(timeseries_opts, dict):
+            continue
+        series_refs = timeseries_opts.get("series")
+        if isinstance(series_refs, list) and len(series_refs) > 0:
+            continue
+        names = [s.get("name") for s in time_series if isinstance(s, dict) and isinstance(s.get("name"), str) and s.get("name")]
+        if len(names) == 0:
+            names = ["total"]
+        timeseries_opts["series"] = [{"name": name, "variant": "primary"} for name in names]
+
+
+def _latest_metric_value(timeseries: list[Any]) -> float:
+    for point in reversed(timeseries):
+        if not isinstance(point, dict):
+            continue
+        value = _as_float(point.get("value"))
+        if value != 0:
+            return value
+    if timeseries and isinstance(timeseries[-1], dict):
+        return _as_float(timeseries[-1].get("value"))
+    return 0.0
+
+
+def _as_int(value: Any) -> int:
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(float(value))
+        except ValueError:
+            return 0
+    return 0
+
+
+def _as_float(value: Any) -> float:
+    if isinstance(value, bool):
+        return 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value)
+        except ValueError:
+            return 0.0
+    return 0.0
+
+
+def _ms_to_rfc3339(value: Any, fallback_ms: int) -> str:
+    ts_ms = _as_int(value)
+    if ts_ms <= 0:
+        ts_ms = fallback_ms
+    return datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc).strftime(
+        "%Y-%m-%dT%H:%M:%SZ"
+    )
