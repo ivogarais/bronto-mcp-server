@@ -26,6 +26,8 @@ Rules:
 - `density` can be `comfortable` or `compact`.
 - Do NOT use top-level `widgets` or `chart`.
 - Do NOT use top-level `bar_charts` (live-only mode).
+- Grid/layout is renderer-owned. Do not try to encode panel layout strategy in payload.
+  `bronto-cli` enforces Charts as 3-per-row and Logs as 2-per-row.
 - Use descriptive titles for dashboard/charts/tables and avoid generic names like
   `Bar Chart 1` or `Table 1`.
 - Title limits: dashboard `<= 64` chars, chart/table `<= 48` chars.

@@ -54,10 +54,11 @@ def test_build_bronto_app_spec_contains_expected_sections():
     assert spec["version"] == "bronto-tui/v1"
     assert spec["title"] == "Errors (Last 30m)"
     assert spec["theme"]["brand"] == "bronto"
-    assert "layout" in spec
     assert "charts" in spec
     assert "tables" in spec
     assert "datasets" in spec
+    first_table_ref = next(iter(spec["tables"]))
+    assert spec["tables"][first_table_ref]["title"] == "Latest Errors"
 
 
 def test_dashboard_build_input_requires_at_least_one_widget():

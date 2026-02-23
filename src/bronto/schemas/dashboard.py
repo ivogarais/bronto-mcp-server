@@ -433,9 +433,6 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
     tables: dict[str, Any] = {}
     datasets: dict[str, Any] = {}
 
-    main_row_children: list[dict[str, Any]] = []
-    weights: list[int] = []
-
     normalized_charts = list(payload.charts)
 
     for idx, chart in enumerate(normalized_charts, start=1):
@@ -443,16 +440,6 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
         dataset_ref = f"chart_dataset_{idx}"
         charts[chart_ref] = _build_chart_spec(chart, dataset_ref)
         datasets[dataset_ref] = _build_chart_dataset(chart)
-
-        main_row_children.append(
-            {
-                "type": "chart",
-                "id": f"chart_panel_{idx}",
-                "title": chart.title,
-                "chartRef": chart_ref,
-            }
-        )
-        weights.append(2)
 
     for idx, table in enumerate(payload.tables, start=1):
         table_ref = f"table{idx}"
@@ -462,6 +449,7 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
         dataset_columns = [column["key"] for column in resolved_columns]
 
         tables[table_ref] = {
+            "title": table.title,
             "datasetRef": dataset_ref,
             "columns": [_to_table_column_spec(column) for column in resolved_columns],
             "rowLimit": table.row_limit,
@@ -473,37 +461,10 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
         }
         table_dataset["liveQuery"] = _live_query_to_spec(table.live_query)
         datasets[dataset_ref] = table_dataset
-        main_row_children.append(
-            {
-                "type": "table",
-                "id": f"table_panel_{idx}",
-                "title": table.title,
-                "tableRef": table_ref,
-            }
-        )
-        weights.append(3)
-
-    layout = {
-        "type": "col",
-        "id": "root",
-        "gap": 1,
-        "children": [
-            {"type": "header", "id": "hdr", "titleRef": "$title"},
-            {
-                "type": "row",
-                "id": "main",
-                "gap": 1,
-                "weights": weights,
-                "children": main_row_children,
-            },
-        ],
-    }
-
     return {
         "version": "bronto-tui/v1",
         "title": payload.title,
         "theme": {"brand": "bronto", "density": payload.density},
-        "layout": layout,
         "charts": charts,
         "tables": tables,
         "datasets": datasets,
