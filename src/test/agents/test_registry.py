@@ -4,7 +4,26 @@ from bronto.agents import build_agent_registry
 def test_build_agent_registry_contains_all_agents():
     registry = build_agent_registry()
     names = {agent.name for agent in registry.agents}
-    assert names == {"search", "datasets", "statement_ids", "dashboard"}
+    assert names == {
+        "search",
+        "datasets",
+        "statement_ids",
+        "dashboard",
+        "api_keys",
+        "users",
+        "context",
+        "exports",
+        "usage",
+        "forward",
+        "groups",
+        "monitors",
+        "dashboards_api",
+        "access",
+        "tags",
+        "parsers",
+        "policies",
+        "encryption_keys",
+    }
 
 
 def test_registered_tools_have_unique_names_and_match_handlers():
