@@ -72,9 +72,9 @@ Table item shape:
 {
   "title": "Latest Errors",
   "columns": [
-    { "title": "ts", "width": "auto" },
-    { "title": "service", "width": 12 },
-    { "title": "message", "width": "flex" }
+    { "key": "@time", "title": "ts", "width": "auto" },
+    { "key": "service", "title": "service", "width": 12 },
+    { "key": "message", "title": "message", "width": "flex" }
   ],
   "rows": [
     ["2026-02-22T12:00:01Z", "api", "NullPointerException"]
@@ -85,7 +85,8 @@ Table item shape:
 
 Column rules:
 - `title` max length: 16 characters.
-- Optional `key`: snake_case, max 24 chars.
+- Required `key`: data field path used to populate the column.
+  Examples: `@time`, `event.type`, `event.toolName`, `event.error.type`.
 - Optional `width`: `"auto"`, `"flex"`, or integer `1..80`.
 
 Quick valid example payload (multi-family, live):
@@ -137,9 +138,9 @@ Quick valid example payload (multi-family, live):
     {
       "title": "Latest Errors",
       "columns": [
-        { "title": "ts", "width": "auto" },
-        { "title": "service", "width": 12 },
-        { "title": "message", "width": "flex" }
+        { "key": "@time", "title": "ts", "width": "auto" },
+        { "key": "service", "title": "service", "width": 12 },
+        { "key": "message", "title": "message", "width": "flex" }
       ],
       "rows": [],
       "live_query": {

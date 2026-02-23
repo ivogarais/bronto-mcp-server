@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-_COLUMN_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]{0,23}$")
+_COLUMN_KEY_PATTERN = re.compile(r"^[@A-Za-z0-9_.:-]{1,64}$")
 
 
 def _normalize_non_empty_text(value: str, field_name: str) -> str:
@@ -24,11 +24,10 @@ class DashboardTableColumnInput(BaseModel):
         min_length=1,
         max_length=16,
     )
-    key: str | None = Field(
-        default=None,
+    key: str = Field(
         description=(
-            "Optional short key used by the renderer and dataset rows "
-            "(snake_case, max 24 chars). If omitted, derived from title."
+            "Required data key path used to fill this column from records "
+            '(e.g. "@time", "event.type", "event.toolName").'
         ),
     )
     width: str | int | None = Field(
@@ -43,13 +42,13 @@ class DashboardTableColumnInput(BaseModel):
 
     @field_validator("key")
     @classmethod
-    def _validate_key(cls, value: str | None) -> str | None:
-        if value is None:
-            return None
-        normalized = value.strip().lower()
+    def _validate_key(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("column key must not be empty")
         if not _COLUMN_KEY_PATTERN.match(normalized):
             raise ValueError(
-                "column key must match ^[a-z][a-z0-9_]{0,23}$ (snake_case, max 24 chars)"
+                "column key must be 1..64 chars and may include letters, numbers, @, _, ., :, -"
             )
         return normalized
 
@@ -632,8 +631,9 @@ def _resolve_table_columns(
     resolved: list[dict[str, Any]] = []
     used_keys: set[str] = set()
     for idx, column in enumerate(columns, start=1):
-        base_key = column.key or _normalize_column_key(column.title)
-        key = _dedupe_key(base_key, used_keys, idx)
+        key = column.key
+        if key in used_keys:
+            raise ValueError(f"duplicate table column key: {key}")
         used_keys.add(key)
         resolved.append(
             {
@@ -651,37 +651,3 @@ def _to_table_column_spec(column: dict[str, Any]) -> dict[str, Any]:
         spec["width"] = column["width"]
     return spec
 
-
-def _normalize_column_key(value: str) -> str:
-    normalized = re.sub(r"[^a-zA-Z0-9]+", "_", value).strip("_").lower()
-    normalized = re.sub(r"_+", "_", normalized)
-    if not normalized:
-        normalized = "col"
-    if normalized[0].isdigit():
-        normalized = f"col_{normalized}"
-    normalized = normalized[:24].rstrip("_")
-    if not normalized:
-        normalized = "col"
-    if not _COLUMN_KEY_PATTERN.match(normalized):
-        normalized = f"col_{normalized}"[:24].rstrip("_")
-    if not _COLUMN_KEY_PATTERN.match(normalized):
-        normalized = "col"
-    return normalized
-
-
-def _dedupe_key(base_key: str, used_keys: set[str], idx: int) -> str:
-    if base_key not in used_keys:
-        return base_key
-
-    suffix_counter = 2
-    while True:
-        suffix = f"_{suffix_counter}"
-        candidate = f"{base_key[: 24 - len(suffix)]}{suffix}"
-        candidate = candidate.rstrip("_")
-        if candidate and candidate not in used_keys and _COLUMN_KEY_PATTERN.match(candidate):
-            return candidate
-        suffix_counter += 1
-        if suffix_counter > 999:
-            fallback = f"col_{idx}"[:24]
-            if fallback not in used_keys:
-                return fallback

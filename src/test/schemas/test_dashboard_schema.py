@@ -26,9 +26,9 @@ def _sample_payload() -> dict:
             {
                 "title": "Latest Errors",
                 "columns": [
-                    {"title": "ts", "width": "auto"},
-                    {"title": "service", "width": 12},
-                    {"title": "message", "width": "flex"},
+                    {"key": "@time", "title": "ts", "width": "auto"},
+                    {"key": "service", "title": "service", "width": 12},
+                    {"key": "message", "title": "message", "width": "flex"},
                 ],
                 "rows": [
                     ["2026-02-22T12:00:01Z", "api", "NullPointerException"],
@@ -74,6 +74,14 @@ def test_dashboard_table_column_title_has_length_limit():
         DashboardBuildInput.model_validate(payload)
 
 
+def test_dashboard_table_column_key_is_required():
+    payload = _sample_payload()
+    payload["tables"][0]["columns"][0].pop("key", None)
+
+    with pytest.raises(ValidationError):
+        DashboardBuildInput.model_validate(payload)
+
+
 def test_dashboard_table_rows_must_match_column_count():
     payload = _sample_payload()
     payload["tables"][0]["rows"] = [["only", "two"]]
@@ -92,12 +100,12 @@ def test_dashboard_payload_rejects_unknown_top_level_keys():
     assert "Extra inputs are not permitted" in str(exc_info.value)
 
 
-def test_dashboard_column_keys_are_normalized_and_deduplicated():
+def test_dashboard_column_keys_are_passed_through():
     payload = _sample_payload()
     payload["tables"][0]["columns"] = [
-        {"title": "Service"},
-        {"title": "Service"},
-        {"title": "Message"},
+        {"key": "event.app.service", "title": "Service"},
+        {"key": "agent.name", "title": "Agent"},
+        {"key": "message", "title": "Message"},
     ]
     payload["tables"][0]["rows"] = [
         ["api", "worker", "boom"],
@@ -108,7 +116,7 @@ def test_dashboard_column_keys_are_normalized_and_deduplicated():
     table_ref = next(iter(spec["tables"]))
     columns = spec["tables"][table_ref]["columns"]
     keys = [column["key"] for column in columns]
-    assert keys == ["service", "service_2", "message"]
+    assert keys == ["event.app.service", "agent.name", "message"]
 
 
 def test_dashboard_build_input_supports_all_chart_families():
@@ -270,7 +278,10 @@ def test_dashboard_build_input_emits_live_query_spec():
         "tables": [
             {
                 "title": "Recent Errors",
-                "columns": [{"title": "event.type"}, {"title": "message"}],
+                "columns": [
+                    {"key": "event.type", "title": "event.type"},
+                    {"key": "message", "title": "message"},
+                ],
                 "rows": [],
                 "live_query": {
                     "mode": "logs",

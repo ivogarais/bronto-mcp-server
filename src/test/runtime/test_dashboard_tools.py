@@ -29,9 +29,9 @@ def _sample_payload() -> dict:
             {
                 "title": "Latest Errors",
                 "columns": [
-                    {"title": "ts", "width": "auto"},
-                    {"title": "service", "width": 12},
-                    {"title": "message", "width": "flex"},
+                    {"key": "@time", "title": "ts", "width": "auto"},
+                    {"key": "service", "title": "service", "width": 12},
+                    {"key": "message", "title": "message", "width": "flex"},
                 ],
                 "rows": [["2026-02-22T12:00:01Z", "api", "NullPointerException"]],
                 "live_query": {
