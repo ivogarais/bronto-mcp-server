@@ -1,8 +1,8 @@
 import json
 import os
+import re
 import shutil
 import subprocess
-import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -90,10 +90,11 @@ class DashboardToolHandlers:
         request = _coerce_payload(payload)
         app_spec = build_bronto_app_spec(request)
         _hydrate_live_seed_data(self.bronto_client, app_spec)
-        spec_path = _write_spec_file(app_spec, spec_file_path)
+        spec_path = _write_spec_file(app_spec, spec_file_path, request.title)
 
         bronto_bin = _resolve_bronto_binary()
         command = [bronto_bin, "serve", "--spec", str(spec_path)]
+        user_command = ["bronto", "serve", "--spec", str(spec_path)]
         normalized_mode = launch_mode.strip().lower()
         if normalized_mode not in {"none", "blocking"}:
             raise ValueError(
@@ -109,7 +110,7 @@ class DashboardToolHandlers:
             return {
                 "status": "prepared",
                 "command": command,
-                "command_str": " ".join(command),
+                "command_str": " ".join(user_command),
                 "spec_path": str(spec_path),
                 "spec_retained": True,
                 "launch_mode": normalized_mode,
@@ -141,7 +142,7 @@ class DashboardToolHandlers:
         return {
             "status": "ok",
             "command": command,
-            "command_str": " ".join(command),
+            "command_str": " ".join(user_command),
             "spec_path": str(spec_path),
             "spec_retained": retained,
             "exit_code": completed.returncode,
@@ -163,17 +164,30 @@ class DashboardToolHandlers:
         )
 
 
-def _write_spec_file(spec_document: dict[str, Any], spec_file_path: str | None) -> Path:
+def _write_spec_file(
+    spec_document: dict[str, Any], spec_file_path: str | None, dashboard_title: str
+) -> Path:
     if spec_file_path:
         path = Path(spec_file_path).expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)
     else:
-        fd, temp_path = tempfile.mkstemp(prefix="bronto-spec-", suffix=".json")
-        os.close(fd)
-        path = Path(temp_path)
+        dashboards_dir = Path.home() / "bronto-dashboards"
+        dashboards_dir.mkdir(parents=True, exist_ok=True)
+        base = _slugify_title(dashboard_title)
+        path = dashboards_dir / f"{base}.json"
+        if path.exists():
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+            path = dashboards_dir / f"{base}-{stamp}.json"
 
     path.write_text(json.dumps(spec_document, indent=2), encoding="utf-8")
     return path
+
+
+def _slugify_title(title: str) -> str:
+    normalized = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    if not normalized:
+        return "dashboard"
+    return normalized[:64].rstrip("-")
 
 
 def _coerce_payload(payload: DashboardBuildInput | dict[str, Any]) -> DashboardBuildInput:

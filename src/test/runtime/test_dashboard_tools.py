@@ -172,6 +172,7 @@ def test_serve_dashboard_prepares_command_without_launch(monkeypatch, runtime, t
     assert result["spec_retained"] is True
     assert "command_str" in result
     assert spec_path.exists()
+    assert result["command_str"].startswith("bronto serve --spec ")
 
 
 def test_serve_dashboard_rejects_invalid_launch_mode(monkeypatch, runtime):
@@ -260,3 +261,18 @@ def test_serve_dashboard_hydrates_live_line_seed_data(monkeypatch, runtime, tmp_
     assert '"series": [' in spec
     assert '"name": "total"' in spec
     assert '"xy": [' in spec
+
+
+def test_serve_dashboard_writes_default_specs_to_dashboards_folder(monkeypatch, runtime, tmp_path):
+    monkeypatch.setattr(
+        "bronto.agents.dashboard.tools.handlers.shutil.which",
+        lambda _: "/usr/local/bin/bronto",
+    )
+    monkeypatch.setenv("HOME", str(tmp_path))
+
+    result = runtime.serve_dashboard(_sample_payload(), launch_mode="none")
+
+    expected_dir = tmp_path / "bronto-dashboards"
+    assert result["status"] == "prepared"
+    assert result["spec_path"].startswith(str(expected_dir))
+    assert result["command_str"].startswith("bronto serve --spec ")
