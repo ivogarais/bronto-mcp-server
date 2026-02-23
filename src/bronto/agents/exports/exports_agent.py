@@ -4,9 +4,10 @@ from .enums import ExportsAgentName
 
 
 class ExportsAgent(BrontoAgent):
-    """Traceability agent for export status tools."""
+    """Agent for export lifecycle tools."""
 
     def __init__(self):
+        """Initialize the exports agent."""
         spec = ExportsAgentSpec()
         super().__init__(
             name=ExportsAgentName.EXPORTS.value,

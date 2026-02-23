@@ -28,6 +28,18 @@ class ContextToolHandlers:
         dict[str, Any],
         Field(description="Raw context response payload returned by Bronto."),
     ]:
+        """Fetch log context around an event.
+
+        Parameters
+        ----------
+        payload : ContextQueryInput
+            Structured context query arguments.
+
+        Returns
+        -------
+        dict[str, Any]
+            Context query response payload.
+        """
         return self.bronto_client.get_context(
             from_=payload.from_,
             from_tags=payload.from_tags,

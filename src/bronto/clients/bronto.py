@@ -159,7 +159,9 @@ class BrontoClient:
             decoding_error_message="Unexpected format for created API key",
         )
 
-    def update_api_key(self, api_key_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def update_api_key(
+        self, api_key_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         response = self._request(
             "PATCH",
             f"/api-keys/{api_key_id}",
@@ -428,7 +430,9 @@ class BrontoClient:
             decoding_error_message="Unexpected format for group members",
         )
 
-    def add_group_members(self, group_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def add_group_members(
+        self, group_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         response = self._request(
             "POST",
             f"/groups/{group_id}/members",

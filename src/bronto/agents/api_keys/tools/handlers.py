@@ -18,6 +18,13 @@ class ApiKeysToolHandlers:
         list[dict[str, Any]],
         Field(description="List of API key objects returned by Bronto."),
     ]:
+        """List API keys.
+
+        Returns
+        -------
+        list[dict[str, Any]]
+            API key list response payload.
+        """
         return self.bronto_client.list_api_keys()
 
     def create_api_key(
@@ -30,6 +37,18 @@ class ApiKeysToolHandlers:
         dict[str, Any],
         Field(description="Created API key payload."),
     ]:
+        """Create an API key.
+
+        Parameters
+        ----------
+        payload : ApiKeyCreateInput
+            Structured API key creation input.
+
+        Returns
+        -------
+        dict[str, Any]
+            Created API key response payload.
+        """
         return self.bronto_client.create_api_key(payload.model_dump(exclude_none=True))
 
     def update_api_key(
@@ -42,6 +61,18 @@ class ApiKeysToolHandlers:
         dict[str, Any],
         Field(description="Updated API key payload."),
     ]:
+        """Update an API key.
+
+        Parameters
+        ----------
+        payload : ApiKeyUpdateInput
+            Structured API key update input.
+
+        Returns
+        -------
+        dict[str, Any]
+            Updated API key response payload.
+        """
         body = payload.model_dump(exclude_none=True)
         api_key_id = body.pop("api_key_id")
         return self.bronto_client.update_api_key(api_key_id, body)
@@ -56,4 +87,16 @@ class ApiKeysToolHandlers:
         dict[str, Any],
         Field(description="API key deletion result."),
     ]:
+        """Delete an API key.
+
+        Parameters
+        ----------
+        payload : ApiKeyByIdInput
+            Structured payload containing an API key ID.
+
+        Returns
+        -------
+        dict[str, Any]
+            API key deletion response payload.
+        """
         return self.bronto_client.delete_api_key(payload.api_key_id)

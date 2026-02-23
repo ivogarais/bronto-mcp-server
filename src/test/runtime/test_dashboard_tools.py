@@ -76,7 +76,7 @@ def _sample_line_payload() -> dict:
                 "live_query": {
                     "mode": "metrics",
                     "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
-                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                    "metric_functions": ['AVG("event.latencyMs")'],
                     "group_by_keys": [],
                     "lookback_sec": 1800,
                     "limit": 120,
@@ -140,7 +140,9 @@ def test_serve_dashboard_fails_when_bronto_is_missing(monkeypatch, runtime):
         runtime.serve_dashboard(_sample_payload())
 
 
-def test_serve_dashboard_prepares_command_without_launch(monkeypatch, runtime, tmp_path):
+def test_serve_dashboard_prepares_command_without_launch(
+    monkeypatch, runtime, tmp_path
+):
     subprocess_calls = []
 
     def _fake_run(command, check):
@@ -194,7 +196,9 @@ def test_dashboard_playbook_returns_expected_guidance(runtime):
     assert "Do NOT use top-level `widgets` or `chart`" in playbook
 
 
-def test_serve_dashboard_hydrates_live_timeseries_seed_data(monkeypatch, runtime, tmp_path):
+def test_serve_dashboard_hydrates_live_timeseries_seed_data(
+    monkeypatch, runtime, tmp_path
+):
     monkeypatch.setattr(
         "bronto.agents.dashboard.tools.handlers.shutil.which",
         lambda _: "/usr/local/bin/bronto",
@@ -263,7 +267,9 @@ def test_serve_dashboard_hydrates_live_line_seed_data(monkeypatch, runtime, tmp_
     assert '"xy": [' in spec
 
 
-def test_serve_dashboard_writes_default_specs_to_dashboards_folder(monkeypatch, runtime, tmp_path):
+def test_serve_dashboard_writes_default_specs_to_dashboards_folder(
+    monkeypatch, runtime, tmp_path
+):
     monkeypatch.setattr(
         "bronto.agents.dashboard.tools.handlers.shutil.which",
         lambda _: "/usr/local/bin/bronto",

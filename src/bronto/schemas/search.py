@@ -5,6 +5,18 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 
 def _parse_timerange_to_unix_ms(value: Any) -> Any:
+    """Parse timerange values to unix milliseconds.
+
+    Parameters
+    ----------
+    value : Any
+        Input value, int or datetime string.
+
+    Returns
+    -------
+    Any
+        Parsed unix milliseconds or original value.
+    """
     if value is None:
         return None
     if isinstance(value, int):

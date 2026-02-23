@@ -4,9 +4,10 @@ from .enums import DatasetsAgentName
 
 
 class DatasetsAgent(BrontoAgent):
-    """Traceability agent for dataset discovery and key metadata tools."""
+    """Agent for dataset discovery and metadata tools."""
 
     def __init__(self):
+        """Initialize the datasets agent."""
         spec = DatasetsAgentSpec()
         super().__init__(
             name=DatasetsAgentName.DATASETS.value,

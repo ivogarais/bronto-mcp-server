@@ -453,9 +453,7 @@ def test_create_api_key_accepts_nested_payload_shape(bronto_tools, mock_bronto_c
 def test_update_api_key(bronto_tools, mock_bronto_client):
     mock_bronto_client.update_api_key.return_value = {"id": "k1", "name": "new"}
 
-    result = bronto_tools.update_api_key(
-        ApiKeyUpdateInput(api_key_id="k1", name="new")
-    )
+    result = bronto_tools.update_api_key(ApiKeyUpdateInput(api_key_id="k1", name="new"))
 
     mock_bronto_client.update_api_key.assert_called_once_with("k1", {"name": "new"})
     assert result["name"] == "new"
@@ -516,11 +514,11 @@ def test_get_user_by_id(bronto_tools, mock_bronto_client):
 def test_update_user(bronto_tools, mock_bronto_client):
     mock_bronto_client.update_user.return_value = {"id": "u1", "first_name": "Grace"}
 
-    result = bronto_tools.update_user(
-        UserUpdateInput(user_id="u1", first_name="Grace")
-    )
+    result = bronto_tools.update_user(UserUpdateInput(user_id="u1", first_name="Grace"))
 
-    mock_bronto_client.update_user.assert_called_once_with("u1", {"first_name": "Grace"})
+    mock_bronto_client.update_user.assert_called_once_with(
+        "u1", {"first_name": "Grace"}
+    )
     assert result["first_name"] == "Grace"
 
 
@@ -658,7 +656,9 @@ def test_delete_export(bronto_tools, mock_bronto_client):
     assert result == {"success": True}
 
 
-def test_get_usage_for_log_id_forwards_named_arguments(bronto_tools, mock_bronto_client):
+def test_get_usage_for_log_id_forwards_named_arguments(
+    bronto_tools, mock_bronto_client
+):
     mock_bronto_client.get_usage_for_log_id.return_value = {"rows": []}
 
     result = bronto_tools.get_usage_for_log_id(
@@ -970,7 +970,9 @@ def test_update_tag(bronto_tools, mock_bronto_client):
     result = bronto_tools.update_tag(
         TagUpdateInput(tag_name="team", payload={"description": "desc"})
     )
-    mock_bronto_client.update_tag.assert_called_once_with("team", {"description": "desc"})
+    mock_bronto_client.update_tag.assert_called_once_with(
+        "team", {"description": "desc"}
+    )
     assert result == {"name": "team"}
 
 
@@ -1040,7 +1042,10 @@ def test_get_encryption_key(bronto_tools, mock_bronto_client):
 
 
 def test_update_encryption_key(bronto_tools, mock_bronto_client):
-    mock_bronto_client.update_encryption_key.return_value = {"id": "k1", "enabled": True}
+    mock_bronto_client.update_encryption_key.return_value = {
+        "id": "k1",
+        "enabled": True,
+    }
     result = bronto_tools.update_encryption_key(
         EncryptionKeyUpdateInput(encryption_key_id="k1", payload={"enabled": True})
     )

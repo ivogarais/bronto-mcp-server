@@ -5,7 +5,9 @@ from ..enums import UsageToolName
 
 
 class UsageAgentSpec(BaseModel):
-    description: str = Field(default="Retrieves usage analytics by dataset and by user.")
+    description: str = Field(
+        default="Retrieves usage analytics by dataset and by user."
+    )
     tools: list[AgentToolSpec] = Field(
         default_factory=lambda: [
             AgentToolSpec(

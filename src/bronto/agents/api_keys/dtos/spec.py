@@ -5,7 +5,9 @@ from ..enums import ApiKeysToolName
 
 
 class ApiKeysAgentSpec(BaseModel):
-    description: str = Field(default="Manages API key metadata and discovery operations.")
+    description: str = Field(
+        default="Manages API key metadata and discovery operations."
+    )
     tools: list[AgentToolSpec] = Field(
         default_factory=lambda: [
             AgentToolSpec(

@@ -1,6 +1,6 @@
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from pydantic import BeforeValidator, Field
 from typing_extensions import Annotated
@@ -35,6 +35,13 @@ class SearchToolHandlers:
             )
         ),
     ]:
+        """Return the raw-log retrieval playbook.
+
+        Returns
+        -------
+        str
+            Search logs playbook content.
+        """
         return resolve_playbook(
             "bronto.agents.search", "playbooks/search_logs_playbook.md"
         )
@@ -52,6 +59,18 @@ class SearchToolHandlers:
             "the event, e.g. key=value"
         ),
     ]:
+        """Search raw log events.
+
+        Parameters
+        ----------
+        payload : SearchLogsInput
+            Structured search input including log IDs, time range, and filter.
+
+        Returns
+        -------
+        list[LogEvent]
+            Matching log events.
+        """
         timerange_start = payload.timerange_start
         timerange_end = payload.timerange_end
         if timerange_start is None:
@@ -84,6 +103,18 @@ class SearchToolHandlers:
         Dict[str, Any],
         Field(description="Raw status payload for the asynchronous search."),
     ]:
+        """Get async search job status.
+
+        Parameters
+        ----------
+        payload : SearchStatusInput
+            Structured payload containing search status ID.
+
+        Returns
+        -------
+        dict[str, Any]
+            Search status response payload.
+        """
         return self.bronto_client.get_search_status(payload.status_id)
 
     def cancel_search(
@@ -96,6 +127,18 @@ class SearchToolHandlers:
         Dict[str, Any],
         Field(description="Cancellation result payload."),
     ]:
+        """Cancel an async search job.
+
+        Parameters
+        ----------
+        payload : SearchStatusInput
+            Structured payload containing search status ID.
+
+        Returns
+        -------
+        dict[str, Any]
+            Search cancellation response payload.
+        """
         return self.bronto_client.cancel_search(payload.status_id)
 
     def compute_metrics(
@@ -112,6 +155,18 @@ class SearchToolHandlers:
             "represents the value of the computed metrics for a subset of the provided time range"
         ),
     ]:
+        """Compute metrics for selected logs.
+
+        Parameters
+        ----------
+        payload : ComputeMetricsInput
+            Structured metrics input with log IDs, time range, functions, and filters.
+
+        Returns
+        -------
+        dict[str, Timeseries]
+            Metrics time series grouped by `group_by_keys`.
+        """
         timerange_start = payload.timerange_start
         timerange_end = payload.timerange_end
         if timerange_start is None:
@@ -161,6 +216,18 @@ class SearchToolHandlers:
 
     @staticmethod
     def _validate_input_time(input_time: str) -> str:
+        """Validate timestamp string format.
+
+        Parameters
+        ----------
+        input_time : str
+            Timestamp in `%Y-%m-%d %H:%M:%S` format.
+
+        Returns
+        -------
+        str
+            The validated input timestamp.
+        """
         datetime.strptime(input_time, "%Y-%m-%d %H:%M:%S")
         return input_time
 
@@ -179,6 +246,18 @@ class SearchToolHandlers:
             description="A unix timestamp (in milliseconds) since epoch, representing the `input_time` parameter"
         ),
     ]:
+        """Convert a UTC timestamp string to unix epoch milliseconds.
+
+        Parameters
+        ----------
+        input_time : str
+            UTC timestamp in `%Y-%m-%d %H:%M:%S` format.
+
+        Returns
+        -------
+        int
+            Unix epoch timestamp in milliseconds.
+        """
         return (
             int(
                 datetime.strptime(input_time, "%Y-%m-%d %H:%M:%S")
@@ -194,6 +273,13 @@ class SearchToolHandlers:
             str, Field(description="Current time in the YYYY-MM-DD HH:mm:ss format.")
         ]
     ):
+        """Get current UTC time string.
+
+        Returns
+        -------
+        str
+            Current UTC time in `%Y-%m-%d %H:%M:%S` format.
+        """
         return datetime.strftime(datetime.now(timezone.utc), "%Y-%m-%d %H:%M:%S")
 
     @staticmethod
@@ -206,6 +292,13 @@ class SearchToolHandlers:
             )
         ),
     ]:
+        """Return the metric-computation playbook.
+
+        Returns
+        -------
+        str
+            Compute metrics playbook content.
+        """
         return resolve_playbook(
             "bronto.agents.search", "playbooks/compute_metrics_playbook.md"
         )

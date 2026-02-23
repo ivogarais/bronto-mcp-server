@@ -4,9 +4,10 @@ from .enums import UsersAgentName
 
 
 class UsersAgent(BrontoAgent):
-    """Traceability agent for user directory discovery tools."""
+    """Agent for user lifecycle tools."""
 
     def __init__(self):
+        """Initialize the users agent."""
         spec = UsersAgentSpec()
         super().__init__(
             name=UsersAgentName.USERS.value,

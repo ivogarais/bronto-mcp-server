@@ -26,8 +26,10 @@ class ApiKeyCreateInput(BaseModel):
     @classmethod
     def _coerce_nested_payload(cls, value: Any) -> Any:
         # Backward compatibility: allow {"payload": {...}} wrapper.
-        if isinstance(value, dict) and "payload" in value and isinstance(
-            value["payload"], dict
+        if (
+            isinstance(value, dict)
+            and "payload" in value
+            and isinstance(value["payload"], dict)
         ):
             merged = dict(value["payload"])
             for key, item in value.items():
@@ -62,7 +64,9 @@ class UserCreateInput(BaseModel):
     first_name: str = Field(min_length=1, description="User first name.")
     last_name: str = Field(min_length=1, description="User last name.")
     email: str = Field(min_length=1, description="User email.")
-    roles: list[str] = Field(min_length=1, description="Role identifiers for this user.")
+    roles: list[str] = Field(
+        min_length=1, description="Role identifiers for this user."
+    )
     tags: dict[str, str] = Field(default_factory=dict, description="Optional tags.")
     login_methods: list[str] | None = Field(
         default=None, description="Optional login method identifiers."
@@ -149,7 +153,9 @@ class ContextQueryInput(BaseModel):
 class UsageQueryInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    time_range: str | None = Field(default=None, description="Named time range, e.g. 24h.")
+    time_range: str | None = Field(
+        default=None, description="Named time range, e.g. 24h."
+    )
     from_ts: int | None = Field(default=None, description="Start timestamp in ms.")
     to_ts: int | None = Field(default=None, description="End timestamp in ms.")
     usage_type: str | None = Field(default=None, description="Usage type selector.")
@@ -185,9 +191,7 @@ class ExportCreateInput(BaseModel):
 class ForwardConfigCreateInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    payload: dict[str, Any] = Field(
-        description="Raw forward-config creation payload."
-    )
+    payload: dict[str, Any] = Field(description="Raw forward-config creation payload.")
 
 
 class ForwardConfigUpdateInput(BaseModel):

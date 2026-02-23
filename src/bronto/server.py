@@ -10,6 +10,7 @@ logger = module_logger(__name__)
 
 
 def main() -> None:
+    """Start and run the Bronto MCP server."""
     bootstrap_logging()
     config = Config()
     logger.info("Starting Bronto MCP server, transport=%s", config.mcp_transport.value)

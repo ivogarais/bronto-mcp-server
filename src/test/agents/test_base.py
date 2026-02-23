@@ -31,7 +31,11 @@ def test_build_instructions_includes_agents_and_tools():
             BrontoAgent(
                 name="search",
                 description="search agent",
-                tools=[AgentToolSpec(name="search_logs", handler="search_logs", description="search")],
+                tools=[
+                    AgentToolSpec(
+                        name="search_logs", handler="search_logs", description="search"
+                    )
+                ],
             )
         ]
     )

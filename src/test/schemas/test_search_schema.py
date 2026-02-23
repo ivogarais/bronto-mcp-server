@@ -1,6 +1,12 @@
 import pytest
 
-from bronto.schemas import ComputeMetricsInput, Datapoint, LogEvent, SearchLogsInput, Timeseries
+from bronto.schemas import (
+    ComputeMetricsInput,
+    Datapoint,
+    LogEvent,
+    SearchLogsInput,
+    Timeseries,
+)
 
 
 def test_log_event_add_attribute_updates_existing_value():

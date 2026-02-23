@@ -4,9 +4,10 @@ from .enums import ContextAgentName
 
 
 class ContextAgent(BrontoAgent):
-    """Traceability agent for context retrieval tools."""
+    """Agent for context retrieval tools."""
 
     def __init__(self):
+        """Initialize the context agent."""
         spec = ContextAgentSpec()
         super().__init__(
             name=ContextAgentName.CONTEXT.value,

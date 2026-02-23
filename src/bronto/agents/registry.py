@@ -20,6 +20,13 @@ from .users import UsersAgent
 
 
 def build_agent_registry() -> BrontoAgentRegistry:
+    """Build the default MCP agent registry.
+
+    Returns
+    -------
+    BrontoAgentRegistry
+        Registry with all enabled agents.
+    """
     return BrontoAgentRegistry(
         agents=[
             SearchAgent(),

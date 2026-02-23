@@ -9,6 +9,20 @@ _COLUMN_KEY_PATTERN = re.compile(r"^[@A-Za-z0-9_.:-]{1,64}$")
 
 
 def _normalize_non_empty_text(value: str, field_name: str) -> str:
+    """Normalize and validate non-empty text.
+
+    Parameters
+    ----------
+    value : str
+        Input text value.
+    field_name : str
+        Field label used in validation messages.
+
+    Returns
+    -------
+    str
+        Normalized text.
+    """
     normalized = " ".join(value.split()).strip()
     if not normalized:
         raise ValueError(f"{field_name} must not be empty")
@@ -19,8 +33,7 @@ class DashboardTableColumnInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     title: str = Field(
-        description="Column title shown in the table header"
-        ".",
+        description="Column title shown in the table header" ".",
         min_length=1,
         max_length=16,
     )
@@ -205,7 +218,7 @@ class DashboardLiveQueryInput(BaseModel):
     metric_functions: list[str] = Field(
         default_factory=list,
         description=(
-            "Metrics expressions (e.g. COUNT(*), AVG(\"event.latencyMs\")). "
+            'Metrics expressions (e.g. COUNT(*), AVG("event.latencyMs")). '
             "Required when mode=metrics."
         ),
     )
@@ -405,12 +418,28 @@ class DashboardBuildInput(BaseModel):
             raise ValueError(
                 "bar_charts is not supported in live-only mode; use charts[] with live_query"
             )
-        if len(self.charts) == 0 and len(self.bar_charts) == 0 and len(self.tables) == 0:
+        if (
+            len(self.charts) == 0
+            and len(self.bar_charts) == 0
+            and len(self.tables) == 0
+        ):
             raise ValueError("dashboard must include at least one chart or table")
         return self
 
 
 def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
+    """Build a Bronto app spec from dashboard input.
+
+    Parameters
+    ----------
+    payload : DashboardBuildInput
+        Validated dashboard payload.
+
+    Returns
+    -------
+    dict[str, Any]
+        Bronto-compatible app spec document.
+    """
     charts: dict[str, Any] = {}
     tables: dict[str, Any] = {}
     datasets: dict[str, Any] = {}
@@ -454,6 +483,20 @@ def build_bronto_app_spec(payload: DashboardBuildInput) -> dict[str, Any]:
 
 
 def _build_chart_spec(chart: DashboardChartInput, dataset_ref: str) -> dict[str, Any]:
+    """Build chart spec section for one chart.
+
+    Parameters
+    ----------
+    chart : DashboardChartInput
+        Chart input model.
+    dataset_ref : str
+        Dataset reference ID.
+
+    Returns
+    -------
+    dict[str, Any]
+        Chart spec block.
+    """
     spec: dict[str, Any] = {
         "title": chart.title,
         "family": chart.family,
@@ -513,6 +556,18 @@ def _build_chart_spec(chart: DashboardChartInput, dataset_ref: str) -> dict[str,
 
 
 def _build_chart_dataset(chart: DashboardChartInput) -> dict[str, Any]:
+    """Build dataset section for one chart.
+
+    Parameters
+    ----------
+    chart : DashboardChartInput
+        Chart input model.
+
+    Returns
+    -------
+    dict[str, Any]
+        Dataset spec block.
+    """
     dataset: dict[str, Any] = {}
 
     if chart.family == "bar":
@@ -591,6 +646,18 @@ def _build_chart_dataset(chart: DashboardChartInput) -> dict[str, Any]:
 
 
 def _live_query_to_spec(live_query: DashboardLiveQueryInput) -> dict[str, Any]:
+    """Convert live query input model to spec shape.
+
+    Parameters
+    ----------
+    live_query : DashboardLiveQueryInput
+        Live query model.
+
+    Returns
+    -------
+    dict[str, Any]
+        Live query spec block.
+    """
     payload: dict[str, Any] = {
         "mode": live_query.mode,
         "logIds": live_query.log_ids,
@@ -604,7 +671,21 @@ def _live_query_to_spec(live_query: DashboardLiveQueryInput) -> dict[str, Any]:
     return payload
 
 
-def _series_refs_from_xy(series: list[DashboardXYSeriesInput]) -> list[DashboardSeriesRefInput]:
+def _series_refs_from_xy(
+    series: list[DashboardXYSeriesInput],
+) -> list[DashboardSeriesRefInput]:
+    """Create series refs from XY data.
+
+    Parameters
+    ----------
+    series : list[DashboardXYSeriesInput]
+        XY series inputs.
+
+    Returns
+    -------
+    list[DashboardSeriesRefInput]
+        Series references.
+    """
     if len(series) == 0:
         return [DashboardSeriesRefInput(name="total", variant="primary")]
     return [DashboardSeriesRefInput(name=s.name, variant="primary") for s in series]
@@ -613,12 +694,36 @@ def _series_refs_from_xy(series: list[DashboardXYSeriesInput]) -> list[Dashboard
 def _series_refs_from_time(
     series: list[DashboardTimeSeriesInput],
 ) -> list[DashboardSeriesRefInput]:
+    """Create series refs from time-series data.
+
+    Parameters
+    ----------
+    series : list[DashboardTimeSeriesInput]
+        Time-series inputs.
+
+    Returns
+    -------
+    list[DashboardSeriesRefInput]
+        Series references.
+    """
     if len(series) == 0:
         return [DashboardSeriesRefInput(name="total", variant="primary")]
     return [DashboardSeriesRefInput(name=s.name, variant="primary") for s in series]
 
 
 def _series_ref_to_spec(series: DashboardSeriesRefInput) -> dict[str, Any]:
+    """Convert one series ref model to spec dict.
+
+    Parameters
+    ----------
+    series : DashboardSeriesRefInput
+        Series reference model.
+
+    Returns
+    -------
+    dict[str, Any]
+        Series reference spec.
+    """
     out = {"name": series.name}
     if series.variant is not None:
         out["variant"] = series.variant
@@ -628,6 +733,18 @@ def _series_ref_to_spec(series: DashboardSeriesRefInput) -> dict[str, Any]:
 def _resolve_table_columns(
     columns: list[DashboardTableColumnInput],
 ) -> list[dict[str, Any]]:
+    """Resolve and validate table column definitions.
+
+    Parameters
+    ----------
+    columns : list[DashboardTableColumnInput]
+        Table column inputs.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Normalized column definitions.
+    """
     resolved: list[dict[str, Any]] = []
     used_keys: set[str] = set()
     for idx, column in enumerate(columns, start=1):
@@ -646,8 +763,19 @@ def _resolve_table_columns(
 
 
 def _to_table_column_spec(column: dict[str, Any]) -> dict[str, Any]:
+    """Convert one normalized column to spec shape.
+
+    Parameters
+    ----------
+    column : dict[str, Any]
+        Normalized column mapping.
+
+    Returns
+    -------
+    dict[str, Any]
+        Table column spec block.
+    """
     spec: dict[str, Any] = {"key": column["key"], "title": column["title"]}
     if column["width"] is not None:
         spec["width"] = column["width"]
     return spec
-

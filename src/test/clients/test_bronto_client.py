@@ -143,7 +143,9 @@ def test_get_top_keys_returns_values(client, monkeypatch):
             "level": {"values": {"info": 20}},
         }
     }
-    monkeypatch.setattr(client, "_request", Mock(return_value=_response(200, json_body=body)))
+    monkeypatch.setattr(
+        client, "_request", Mock(return_value=_response(200, json_body=body))
+    )
 
     values = client.get_top_keys("id1")
 
@@ -167,7 +169,9 @@ def test_get_all_datasets_top_keys(client, monkeypatch):
         "id1": {"service": {"values": {"api": 1}}, "level": {"values": {"info": 1}}},
         "id2": {"event.type": {"values": {"x": 1}}},
     }
-    monkeypatch.setattr(client, "_request", Mock(return_value=_response(200, json_body=body)))
+    monkeypatch.setattr(
+        client, "_request", Mock(return_value=_response(200, json_body=body))
+    )
 
     keys = client.get_all_datasets_top_keys()
 
@@ -182,7 +186,9 @@ def test_get_all_datasets_top_keys_and_values(client, monkeypatch):
             "level": {"values": {"info": 1, "error": 1}},
         }
     }
-    monkeypatch.setattr(client, "_request", Mock(return_value=_response(200, json_body=body)))
+    monkeypatch.setattr(
+        client, "_request", Mock(return_value=_response(200, json_body=body))
+    )
 
     values = client.get_all_datasets_top_keys_and_values()
 
@@ -275,7 +281,11 @@ def test_deploy_statements_success(client, monkeypatch):
     monkeypatch.setattr(
         client,
         "_read_statement_ids_csv",
-        Mock(return_value={"a": {"log_statement": "m", "file_path": "f", "line_number": 1}}),
+        Mock(
+            return_value={
+                "a": {"log_statement": "m", "file_path": "f", "line_number": 1}
+            }
+        ),
     )
     monkeypatch.setattr(client, "post_statement_ids", Mock(return_value=True))
 

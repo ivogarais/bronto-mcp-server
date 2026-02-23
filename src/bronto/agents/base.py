@@ -5,7 +5,9 @@ from pydantic import BaseModel, Field
 
 class AgentToolSpec(BaseModel):
     name: str = Field(description="Tool name exposed to MCP clients")
-    handler: str = Field(description="Method name on BrontoRuntime that implements this spec")
+    handler: str = Field(
+        description="Method name on BrontoRuntime that implements this spec"
+    )
     description: str = Field(description="LLM-facing tool description")
 
 

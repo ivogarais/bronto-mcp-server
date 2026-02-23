@@ -4,9 +4,10 @@ from .enums import DashboardAgentName
 
 
 class DashboardAgent(BrontoAgent):
-    """Dashboard agent for Bronto TUI spec generation and rendering."""
+    """Agent for dashboard spec and serve tools."""
 
     def __init__(self):
+        """Initialize the dashboard agent."""
         spec = DashboardAgentSpec()
         super().__init__(
             name=DashboardAgentName.DASHBOARD.value,

@@ -26,7 +26,9 @@ def test_runtime_init_requires_non_empty_registry():
     client = Mock(spec=BrontoClient)
     empty_registry = BrontoAgentRegistry(agents=[])
 
-    with pytest.raises(ValueError, match="agent_registry must include at least one agent"):
+    with pytest.raises(
+        ValueError, match="agent_registry must include at least one agent"
+    ):
         BrontoRuntime(client, empty_registry)
 
 

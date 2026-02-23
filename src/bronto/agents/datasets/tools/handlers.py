@@ -27,6 +27,13 @@ class DatasetsToolHandlers:
                 of data that the dataset contains. Other common tags are `service`, `teams` and `environment`"""
         ),
     ]:
+        """List datasets visible to the current API key.
+
+        Returns
+        -------
+        list[Dataset]
+            Normalized dataset list with name, collection, log_id, and tags.
+        """
         datasets_data = self.bronto_client.get_datasets()
         return [
             Dataset(
@@ -48,6 +55,18 @@ class DatasetsToolHandlers:
         Dict[str, Any],
         Field(description="Created log payload."),
     ]:
+        """Create a new log dataset.
+
+        Parameters
+        ----------
+        payload : LogCreateInput
+            Structured log creation input.
+
+        Returns
+        -------
+        dict[str, Any]
+            Created log response payload.
+        """
         return self.bronto_client.create_log(payload.model_dump())
 
     def get_datasets_by_name(
@@ -69,6 +88,20 @@ class DatasetsToolHandlers:
             "as all the tags associated to this dataset."
         ),
     ]:
+        """Find datasets by exact name and collection.
+
+        Parameters
+        ----------
+        dataset_name : str
+            Dataset name to match exactly.
+        collection_name : str
+            Collection name to match exactly.
+
+        Returns
+        -------
+        list[Dataset]
+            Matching datasets.
+        """
         datasets = self.bronto_client.get_datasets()
         return [
             Dataset(
@@ -97,6 +130,18 @@ class DatasetsToolHandlers:
             description="list key names for keys present in the provided dataset referenced with the `log_id` parameter"
         ),
     ]:
+        """List key names present in a dataset.
+
+        Parameters
+        ----------
+        log_id : str
+            Dataset ID (log ID).
+
+        Returns
+        -------
+        list[str]
+            Key names available in the dataset.
+        """
         return [dataset.name for dataset in self.bronto_client.get_keys(log_id)]
 
     def get_all_datasets_keys(
@@ -107,6 +152,13 @@ class DatasetsToolHandlers:
             description="Map from dataset IDs to the list of key names, for keys present in each dataset"
         ),
     ]:
+        """List keys for all datasets.
+
+        Returns
+        -------
+        dict[str, list[str]]
+            Mapping of log ID to key names.
+        """
         return self.bronto_client.get_all_datasets_top_keys()
 
     def get_key_values(
@@ -120,6 +172,20 @@ class DatasetsToolHandlers:
             "dataset."
         ),
     ]:
+        """Get sample values for a key in a dataset.
+
+        Parameters
+        ----------
+        key : str
+            Target key name.
+        log_id : str
+            Dataset ID (log ID).
+
+        Returns
+        -------
+        list[str]
+            Available values for the key.
+        """
         dataset_top_keys = self.bronto_client.get_top_keys(log_id)
         return dataset_top_keys.get(key, [])
 
@@ -133,6 +199,13 @@ class DatasetsToolHandlers:
             )
         ),
     ]:
+        """Return the dataset-discovery playbook text.
+
+        Returns
+        -------
+        str
+            Dataset discovery playbook.
+        """
         return resolve_playbook(
             "bronto.agents.datasets", "playbooks/datasets_playbook.md"
         )

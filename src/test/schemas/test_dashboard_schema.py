@@ -63,7 +63,9 @@ def test_build_bronto_app_spec_contains_expected_sections():
 
 def test_dashboard_build_input_requires_at_least_one_widget():
     with pytest.raises(ValidationError):
-        DashboardBuildInput.model_validate({"title": "Empty", "charts": [], "tables": []})
+        DashboardBuildInput.model_validate(
+            {"title": "Empty", "charts": [], "tables": []}
+        )
 
 
 def test_dashboard_table_column_title_has_length_limit():
@@ -142,7 +144,7 @@ def test_dashboard_build_input_supports_all_chart_families():
                 "live_query": {
                     "mode": "metrics",
                     "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
-                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                    "metric_functions": ['AVG("event.latencyMs")'],
                 },
             },
             {
@@ -152,7 +154,7 @@ def test_dashboard_build_input_supports_all_chart_families():
                 "live_query": {
                     "mode": "metrics",
                     "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
-                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                    "metric_functions": ['AVG("event.latencyMs")'],
                 },
             },
             {
@@ -162,7 +164,7 @@ def test_dashboard_build_input_supports_all_chart_families():
                 "live_query": {
                     "mode": "metrics",
                     "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
-                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                    "metric_functions": ['AVG("event.latencyMs")'],
                 },
             },
             {
@@ -328,9 +330,7 @@ def test_dashboard_build_input_rejects_legacy_bar_charts():
         DashboardBuildInput.model_validate(
             {
                 "title": "Legacy shape",
-                "bar_charts": [
-                    {"title": "Errors", "labels": ["api"], "values": [1]}
-                ],
+                "bar_charts": [{"title": "Errors", "labels": ["api"], "values": [1]}],
             }
         )
 
@@ -372,7 +372,7 @@ def test_dashboard_build_input_defaults_line_series_for_live_only_chart():
                 "live_query": {
                     "mode": "metrics",
                     "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
-                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                    "metric_functions": ['AVG("event.latencyMs")'],
                 },
             }
         ],

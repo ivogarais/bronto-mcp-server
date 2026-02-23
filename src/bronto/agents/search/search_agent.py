@@ -4,9 +4,10 @@ from .enums import SearchAgentName
 
 
 class SearchAgent(BrontoAgent):
-    """Traceability agent for search and metrics tool contracts."""
+    """Agent for search and metric tools."""
 
     def __init__(self):
+        """Initialize the search agent."""
         spec = SearchAgentSpec()
         super().__init__(
             name=SearchAgentName.SEARCH.value,

@@ -36,6 +36,18 @@ class DashboardToolHandlers:
         dict[str, Any],
         Field(description="A validated full Bronto dashboard spec JSON object."),
     ]:
+        """Build and validate a Bronto dashboard spec.
+
+        Parameters
+        ----------
+        payload : DashboardBuildInput
+            Structured dashboard payload.
+
+        Returns
+        -------
+        dict[str, Any]
+            Validated dashboard spec JSON.
+        """
         request = _coerce_payload(payload)
         return build_bronto_app_spec(request)
 
@@ -87,6 +99,24 @@ class DashboardToolHandlers:
             )
         ),
     ]:
+        """Prepare and optionally launch a Bronto dashboard.
+
+        Parameters
+        ----------
+        payload : DashboardBuildInput
+            Structured dashboard payload.
+        keep_spec_file : bool, default=False
+            Whether to retain generated specs after blocking launch.
+        spec_file_path : str | None, default=None
+            Optional explicit output path for the generated spec.
+        launch_mode : str, default="none"
+            Launch mode: ``none`` or ``blocking``.
+
+        Returns
+        -------
+        dict[str, Any]
+            Launch metadata and command details.
+        """
         request = _coerce_payload(payload)
         app_spec = build_bronto_app_spec(request)
         _hydrate_live_seed_data(self.bronto_client, app_spec)
@@ -97,9 +127,7 @@ class DashboardToolHandlers:
         user_command = ["bronto", "serve", "--spec", str(spec_path)]
         normalized_mode = launch_mode.strip().lower()
         if normalized_mode not in {"none", "blocking"}:
-            raise ValueError(
-                "Invalid launch_mode. Use one of: 'none', 'blocking'."
-            )
+            raise ValueError("Invalid launch_mode. Use one of: 'none', 'blocking'.")
 
         if normalized_mode == "none":
             logger.info(
@@ -159,6 +187,13 @@ class DashboardToolHandlers:
             )
         ),
     ]:
+        """Return the dashboard payload playbook.
+
+        Returns
+        -------
+        str
+            Dashboard playbook content.
+        """
         return resolve_playbook(
             "bronto.agents.dashboard", "playbooks/dashboard_playbook.md"
         )
@@ -167,6 +202,22 @@ class DashboardToolHandlers:
 def _write_spec_file(
     spec_document: dict[str, Any], spec_file_path: str | None, dashboard_title: str
 ) -> Path:
+    """Write dashboard spec to disk.
+
+    Parameters
+    ----------
+    spec_document : dict[str, Any]
+        Spec JSON payload.
+    spec_file_path : str | None
+        Optional explicit output path.
+    dashboard_title : str
+        Dashboard title used for default file naming.
+
+    Returns
+    -------
+    Path
+        Written file path.
+    """
     if spec_file_path:
         path = Path(spec_file_path).expanduser()
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -184,13 +235,39 @@ def _write_spec_file(
 
 
 def _slugify_title(title: str) -> str:
+    """Convert a title to a filesystem-safe slug.
+
+    Parameters
+    ----------
+    title : str
+        Raw dashboard title.
+
+    Returns
+    -------
+    str
+        Lowercase slug.
+    """
     normalized = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
     if not normalized:
         return "dashboard"
     return normalized[:64].rstrip("-")
 
 
-def _coerce_payload(payload: DashboardBuildInput | dict[str, Any]) -> DashboardBuildInput:
+def _coerce_payload(
+    payload: DashboardBuildInput | dict[str, Any],
+) -> DashboardBuildInput:
+    """Coerce input payload to ``DashboardBuildInput``.
+
+    Parameters
+    ----------
+    payload : DashboardBuildInput | dict[str, Any]
+        Raw payload.
+
+    Returns
+    -------
+    DashboardBuildInput
+        Validated payload model.
+    """
     if isinstance(payload, DashboardBuildInput):
         return payload
     try:
@@ -205,6 +282,13 @@ def _coerce_payload(payload: DashboardBuildInput | dict[str, Any]) -> DashboardB
 
 
 def _resolve_bronto_binary() -> str:
+    """Resolve the Bronto CLI binary path.
+
+    Returns
+    -------
+    str
+        Executable path.
+    """
     configured = os.environ.get("BRONTO_BIN", "bronto").strip() or "bronto"
     if os.path.sep in configured:
         candidate = Path(configured).expanduser()
@@ -224,6 +308,15 @@ def _resolve_bronto_binary() -> str:
 
 
 def _hydrate_live_seed_data(bronto_client: Any, app_spec: dict[str, Any]) -> None:
+    """Hydrate live-query datasets with seed data.
+
+    Parameters
+    ----------
+    bronto_client : Any
+        Bronto client instance.
+    app_spec : dict[str, Any]
+        Mutable app spec document.
+    """
     datasets = app_spec.get("datasets", {})
     if not isinstance(datasets, dict):
         return
@@ -279,6 +372,21 @@ def _hydrate_metrics_dataset(
     start_ms: int,
     end_ms: int,
 ) -> None:
+    """Hydrate one metrics dataset in place.
+
+    Parameters
+    ----------
+    bronto_client : Any
+        Bronto client instance.
+    dataset : dict[str, Any]
+        Target dataset mapping.
+    live_query : dict[str, Any]
+        Live query definition.
+    start_ms : int
+        Window start in unix milliseconds.
+    end_ms : int
+        Window end in unix milliseconds.
+    """
     response = bronto_client.search_post(
         timestamp_start=start_ms,
         timestamp_end=end_ms,
@@ -294,7 +402,10 @@ def _hydrate_metrics_dataset(
         time_series: list[dict[str, Any]] = []
         for group in groups:
             points = [
-                {"t": _ms_to_rfc3339(point.get("@timestamp"), end_ms), "v": _as_float(point.get("value"))}
+                {
+                    "t": _ms_to_rfc3339(point.get("@timestamp"), end_ms),
+                    "v": _as_float(point.get("value")),
+                }
                 for point in group.get("timeseries", [])
                 if isinstance(point, dict)
             ]
@@ -302,7 +413,12 @@ def _hydrate_metrics_dataset(
                 points = [{"t": _ms_to_rfc3339(end_ms, end_ms), "v": 0.0}]
             time_series.append({"name": group.get("name") or "total", "points": points})
         if len(time_series) == 0:
-            time_series = [{"name": "total", "points": [{"t": _ms_to_rfc3339(end_ms, end_ms), "v": 0.0}]}]
+            time_series = [
+                {
+                    "name": "total",
+                    "points": [{"t": _ms_to_rfc3339(end_ms, end_ms), "v": 0.0}],
+                }
+            ]
         dataset["time"] = time_series
         return
 
@@ -320,7 +436,9 @@ def _hydrate_metrics_dataset(
                 points = [{"x": float(end_ms / 1000.0), "y": 0.0}]
             xy_series.append({"name": group.get("name") or "total", "points": points})
         if len(xy_series) == 0:
-            xy_series = [{"name": "total", "points": [{"x": float(end_ms / 1000.0), "y": 0.0}]}]
+            xy_series = [
+                {"name": "total", "points": [{"x": float(end_ms / 1000.0), "y": 0.0}]}
+            ]
         dataset["xy"] = xy_series
         return
 
@@ -336,7 +454,11 @@ def _hydrate_metrics_dataset(
 
     if kind == "valueSeries":
         total_group = groups[0] if groups else {"timeseries": []}
-        values = [_as_float(point.get("value")) for point in total_group.get("timeseries", []) if isinstance(point, dict)]
+        values = [
+            _as_float(point.get("value"))
+            for point in total_group.get("timeseries", [])
+            if isinstance(point, dict)
+        ]
         if len(values) == 0:
             values = [0.0]
         dataset["value"] = values
@@ -362,6 +484,21 @@ def _hydrate_logs_dataset(
     start_ms: int,
     end_ms: int,
 ) -> None:
+    """Hydrate one logs dataset in place.
+
+    Parameters
+    ----------
+    bronto_client : Any
+        Bronto client instance.
+    dataset : dict[str, Any]
+        Target dataset mapping.
+    live_query : dict[str, Any]
+        Live query definition.
+    start_ms : int
+        Window start in unix milliseconds.
+    end_ms : int
+        Window end in unix milliseconds.
+    """
     events = bronto_client.search(
         timestamp_start=start_ms,
         timestamp_end=end_ms,
@@ -386,6 +523,18 @@ def _hydrate_logs_dataset(
 
 
 def _extract_metric_groups(response: Any) -> list[dict[str, Any]]:
+    """Extract grouped metric series from search response.
+
+    Parameters
+    ----------
+    response : Any
+        Raw metrics response.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Grouped series entries.
+    """
     if not isinstance(response, dict):
         return []
     groups = response.get("groups_series")
@@ -415,6 +564,15 @@ def _extract_metric_groups(response: Any) -> list[dict[str, Any]]:
 
 
 def _backfill_chart_series_refs(app_spec: dict[str, Any], now_ms: int) -> None:
+    """Backfill missing chart series refs from hydrated datasets.
+
+    Parameters
+    ----------
+    app_spec : dict[str, Any]
+        Mutable app spec document.
+    now_ms : int
+        Current unix timestamp in milliseconds.
+    """
     charts = app_spec.get("charts", {})
     datasets = app_spec.get("datasets", {})
     if not isinstance(charts, dict) or not isinstance(datasets, dict):
@@ -492,6 +650,18 @@ def _backfill_chart_series_refs(app_spec: dict[str, Any], now_ms: int) -> None:
 
 
 def _latest_metric_value(timeseries: list[Any]) -> float:
+    """Get the latest non-zero metric value.
+
+    Parameters
+    ----------
+    timeseries : list[Any]
+        Raw timeseries points.
+
+    Returns
+    -------
+    float
+        Latest usable value.
+    """
     for point in reversed(timeseries):
         if not isinstance(point, dict):
             continue
@@ -504,6 +674,18 @@ def _latest_metric_value(timeseries: list[Any]) -> float:
 
 
 def _as_int(value: Any) -> int:
+    """Coerce value to integer.
+
+    Parameters
+    ----------
+    value : Any
+        Input value.
+
+    Returns
+    -------
+    int
+        Parsed integer or zero.
+    """
     if isinstance(value, bool):
         return 0
     if isinstance(value, (int, float)):
@@ -517,6 +699,18 @@ def _as_int(value: Any) -> int:
 
 
 def _as_float(value: Any) -> float:
+    """Coerce value to float.
+
+    Parameters
+    ----------
+    value : Any
+        Input value.
+
+    Returns
+    -------
+    float
+        Parsed float or zero.
+    """
     if isinstance(value, bool):
         return 0.0
     if isinstance(value, (int, float)):
@@ -530,6 +724,20 @@ def _as_float(value: Any) -> float:
 
 
 def _ms_to_rfc3339(value: Any, fallback_ms: int) -> str:
+    """Convert milliseconds timestamp to RFC3339 string.
+
+    Parameters
+    ----------
+    value : Any
+        Candidate timestamp value.
+    fallback_ms : int
+        Fallback timestamp in milliseconds.
+
+    Returns
+    -------
+    str
+        UTC RFC3339 timestamp.
+    """
     ts_ms = _as_int(value)
     if ts_ms <= 0:
         ts_ms = fallback_ms

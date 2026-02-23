@@ -4,9 +4,10 @@ from .enums import ForwardAgentName
 
 
 class ForwardAgent(BrontoAgent):
-    """Traceability agent for forwarding configuration tools."""
+    """Agent for forwarding configuration tools."""
 
     def __init__(self):
+        """Initialize the forward agent."""
         spec = ForwardAgentSpec()
         super().__init__(
             name=ForwardAgentName.FORWARD.value,

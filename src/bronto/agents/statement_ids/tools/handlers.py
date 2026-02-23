@@ -21,6 +21,13 @@ class StatementIdsToolHandlers:
             "be used to uniquely identify a log statement"
         ),
     ]:
+        """Generate a random statement ID.
+
+        Returns
+        -------
+        str
+            A 16-character statement ID.
+        """
         return uuid.uuid4().hex[:16]
 
     @staticmethod
@@ -36,6 +43,18 @@ class StatementIdsToolHandlers:
         str,
         Field(description="A playbook indicating how to inject IDs in log statements"),
     ]:
+        """Build the inject-statement-ID playbook.
+
+        Parameters
+        ----------
+        src_path : str
+            Source code root path.
+
+        Returns
+        -------
+        str
+            Injection playbook text.
+        """
         return compose_playbook(
             "bronto.agents.statement_ids",
             "playbooks/inject_stmt_ids_playbook.md",
@@ -61,6 +80,18 @@ class StatementIdsToolHandlers:
             "statements"
         ),
     ]:
+        """Build the extract-statement-ID playbook.
+
+        Parameters
+        ----------
+        stmt_id_filepath : str, default="statementIds.csv"
+            CSV output path for extracted statement IDs.
+
+        Returns
+        -------
+        str
+            Extraction playbook text.
+        """
         return compose_playbook(
             "bronto.agents.statement_ids",
             "playbooks/extract_stmt_ids_playbook.md",
@@ -92,6 +123,20 @@ class StatementIdsToolHandlers:
             "this project."
         ),
     ]:
+        """Build the update-statement-ID playbook.
+
+        Parameters
+        ----------
+        src_path : str
+            Source code root path.
+        stmt_id_filepath : str, default="statementIds.csv"
+            CSV path for statement ID mappings.
+
+        Returns
+        -------
+        str
+            Update playbook text.
+        """
         return compose_playbook(
             "bronto.agents.statement_ids",
             "playbooks/update_stmt_ids_playbook.md",
@@ -112,6 +157,13 @@ class StatementIdsToolHandlers:
             )
         ),
     ]:
+        """Return the statement-ID workflow playbook.
+
+        Returns
+        -------
+        str
+            Statement ID workflow playbook text.
+        """
         return resolve_playbook(
             "bronto.agents.statement_ids", "playbooks/statement_ids_playbook.md"
         )
@@ -150,6 +202,24 @@ class StatementIdsToolHandlers:
             "performed successfully."
         ),
     ]:
+        """Deploy statement-ID mappings to Bronto.
+
+        Parameters
+        ----------
+        csv_file_path : str
+            Path to the statement ID CSV file.
+        project_id : str
+            Project identifier.
+        version : str
+            Project version.
+        repo_url : str
+            HTTPS Git repository URL.
+
+        Returns
+        -------
+        dict[str, bool]
+            Deployment result payload.
+        """
         return self.bronto_client.deploy_statements(
             csv_file_path, project_id, version, repo_url
         )

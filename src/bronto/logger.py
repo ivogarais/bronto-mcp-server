@@ -9,6 +9,18 @@ DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def _resolve_level(level: str | int | None) -> int:
+    """Resolve a logging level.
+
+    Parameters
+    ----------
+    level : str | int | None
+        Explicit level value or ``None`` to use environment defaults.
+
+    Returns
+    -------
+    int
+        Resolved logging level as a numeric value.
+    """
     if isinstance(level, int):
         return level
 
@@ -28,6 +40,15 @@ def _resolve_level(level: str | int | None) -> int:
 
 
 def bootstrap_logging(level: str | int | None = None, force: bool = False) -> None:
+    """Configure root logging for the process.
+
+    Parameters
+    ----------
+    level : str | int | None, optional
+        Optional log level override.
+    force : bool, optional
+        Whether to replace existing handlers.
+    """
     target_level = _resolve_level(level)
     root_logger = logging.getLogger()
     root_logger.setLevel(target_level)
@@ -52,4 +73,16 @@ def bootstrap_logging(level: str | int | None = None, force: bool = False) -> No
 
 
 def module_logger(module_name: str) -> logging.Logger:
+    """Create a module-scoped logger.
+
+    Parameters
+    ----------
+    module_name : str
+        Logger name, usually ``__name__``.
+
+    Returns
+    -------
+    logging.Logger
+        Configured logger instance.
+    """
     return logging.getLogger(module_name)

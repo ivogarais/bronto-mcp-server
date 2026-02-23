@@ -4,9 +4,10 @@ from .enums import StatementIdsAgentName
 
 
 class StatementIdsAgent(BrontoAgent):
-    """Traceability agent for statement ID generation and lifecycle tools."""
+    """Agent for statement ID lifecycle tools."""
 
     def __init__(self):
+        """Initialize the statement IDs agent."""
         spec = StatementIdsAgentSpec()
         super().__init__(
             name=StatementIdsAgentName.STATEMENT_IDS.value,

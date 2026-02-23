@@ -27,6 +27,18 @@ class UsageToolHandlers:
         dict[str, Any],
         Field(description="Usage payload grouped by log ID."),
     ]:
+        """Get usage grouped by log ID.
+
+        Parameters
+        ----------
+        payload : UsageQueryInput
+            Structured usage query input.
+
+        Returns
+        -------
+        dict[str, Any]
+            Usage response payload grouped by log ID.
+        """
         return self.bronto_client.get_usage_for_log_id(
             time_range=payload.time_range,
             from_ts=payload.from_ts,
@@ -56,6 +68,18 @@ class UsageToolHandlers:
         dict[str, Any],
         Field(description="Usage payload grouped by user and log ID."),
     ]:
+        """Get usage grouped by user per log ID.
+
+        Parameters
+        ----------
+        payload : UsageQueryInput
+            Structured usage query input.
+
+        Returns
+        -------
+        dict[str, Any]
+            Usage response payload grouped by user and log ID.
+        """
         return self.bronto_client.get_usage_for_user_per_log_id(
             time_range=payload.time_range,
             from_ts=payload.from_ts,

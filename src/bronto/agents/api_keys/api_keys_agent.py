@@ -4,9 +4,10 @@ from .enums import ApiKeysAgentName
 
 
 class ApiKeysAgent(BrontoAgent):
-    """Traceability agent for API key discovery tools."""
+    """Agent for API key management tools."""
 
     def __init__(self):
+        """Initialize the API keys agent."""
         spec = ApiKeysAgentSpec()
         super().__init__(
             name=ApiKeysAgentName.API_KEYS.value,
