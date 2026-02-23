@@ -409,33 +409,72 @@ def _backfill_chart_series_refs(app_spec: dict[str, Any], now_ms: int) -> None:
     for chart in charts.values():
         if not isinstance(chart, dict):
             continue
-        if chart.get("family") != "timeseries":
-            continue
         dataset_ref = chart.get("datasetRef")
         dataset = datasets.get(dataset_ref) if isinstance(dataset_ref, str) else None
         if not isinstance(dataset, dict):
             continue
+        family = chart.get("family")
 
-        time_series = dataset.get("time")
-        if not isinstance(time_series, list) or len(time_series) == 0:
-            dataset["time"] = [
-                {
-                    "name": "total",
-                    "points": [{"t": _ms_to_rfc3339(now_ms, now_ms), "v": 0.0}],
-                }
+        if family == "timeseries":
+            time_series = dataset.get("time")
+            if not isinstance(time_series, list) or len(time_series) == 0:
+                dataset["time"] = [
+                    {
+                        "name": "total",
+                        "points": [{"t": _ms_to_rfc3339(now_ms, now_ms), "v": 0.0}],
+                    }
+                ]
+                time_series = dataset["time"]
+
+            timeseries_opts = chart.get("timeseries")
+            if not isinstance(timeseries_opts, dict):
+                continue
+            series_refs = timeseries_opts.get("series")
+            if isinstance(series_refs, list) and len(series_refs) > 0:
+                continue
+            names = [
+                s.get("name")
+                for s in time_series
+                if isinstance(s, dict)
+                and isinstance(s.get("name"), str)
+                and s.get("name")
             ]
-            time_series = dataset["time"]
+            if len(names) == 0:
+                names = ["total"]
+            timeseries_opts["series"] = [
+                {"name": name, "variant": "primary"} for name in names
+            ]
+            continue
 
-        timeseries_opts = chart.get("timeseries")
-        if not isinstance(timeseries_opts, dict):
-            continue
-        series_refs = timeseries_opts.get("series")
-        if isinstance(series_refs, list) and len(series_refs) > 0:
-            continue
-        names = [s.get("name") for s in time_series if isinstance(s, dict) and isinstance(s.get("name"), str) and s.get("name")]
-        if len(names) == 0:
-            names = ["total"]
-        timeseries_opts["series"] = [{"name": name, "variant": "primary"} for name in names]
+        if family in {"line", "waveline"}:
+            xy_series = dataset.get("xy")
+            if not isinstance(xy_series, list) or len(xy_series) == 0:
+                dataset["xy"] = [
+                    {
+                        "name": "total",
+                        "points": [{"x": float(now_ms / 1000.0), "y": 0.0}],
+                    }
+                ]
+                xy_series = dataset["xy"]
+
+            chart_opts = chart.get(family)
+            if not isinstance(chart_opts, dict):
+                continue
+            series_refs = chart_opts.get("series")
+            if isinstance(series_refs, list) and len(series_refs) > 0:
+                continue
+            names = [
+                s.get("name")
+                for s in xy_series
+                if isinstance(s, dict)
+                and isinstance(s.get("name"), str)
+                and s.get("name")
+            ]
+            if len(names) == 0:
+                names = ["total"]
+            chart_opts["series"] = [
+                {"name": name, "variant": "primary"} for name in names
+            ]
 
 
 def _latest_metric_value(timeseries: list[Any]) -> float:

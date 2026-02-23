@@ -345,5 +345,32 @@ def test_dashboard_build_input_allows_live_only_timeseries_without_seed_points()
 
     spec = build_bronto_app_spec(DashboardBuildInput.model_validate(payload))
     dataset = spec["datasets"]["chart_dataset_1"]
+    chart = spec["charts"]["chart1"]
     assert dataset["kind"] == "timeSeries"
     assert dataset["liveQuery"]["mode"] == "metrics"
+    assert chart["timeseries"]["series"] == [{"name": "total", "variant": "primary"}]
+
+
+def test_dashboard_build_input_defaults_line_series_for_live_only_chart():
+    payload = {
+        "title": "Live Only Line Chart",
+        "charts": [
+            {
+                "title": "Avg Latency",
+                "family": "line",
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                },
+            }
+        ],
+    }
+
+    spec = build_bronto_app_spec(DashboardBuildInput.model_validate(payload))
+    dataset = spec["datasets"]["chart_dataset_1"]
+    chart = spec["charts"]["chart1"]
+
+    assert dataset["kind"] == "xySeries"
+    assert dataset["xy"] == []
+    assert chart["line"]["series"] == [{"name": "total", "variant": "primary"}]

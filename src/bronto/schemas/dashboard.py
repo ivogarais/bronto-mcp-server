@@ -8,6 +8,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 _COLUMN_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]{0,23}$")
 
 
+def _normalize_non_empty_text(value: str, field_name: str) -> str:
+    normalized = " ".join(value.split()).strip()
+    if not normalized:
+        raise ValueError(f"{field_name} must not be empty")
+    return normalized
+
+
 class DashboardTableColumnInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -32,10 +39,7 @@ class DashboardTableColumnInput(BaseModel):
     @field_validator("title")
     @classmethod
     def _normalize_title(cls, value: str) -> str:
-        normalized = " ".join(value.split()).strip()
-        if not normalized:
-            raise ValueError("column title must not be empty")
-        return normalized
+        return _normalize_non_empty_text(value, "column title")
 
     @field_validator("key")
     @classmethod
@@ -86,10 +90,7 @@ class DashboardBarChartInput(BaseModel):
     @field_validator("title")
     @classmethod
     def _normalize_title(cls, value: str) -> str:
-        normalized = " ".join(value.split()).strip()
-        if not normalized:
-            raise ValueError("bar chart title must not be empty")
-        return normalized
+        return _normalize_non_empty_text(value, "bar chart title")
 
     @field_validator("labels")
     @classmethod
@@ -305,39 +306,22 @@ class DashboardChartInput(BaseModel):
 
     @model_validator(mode="after")
     def _validate_for_family(self) -> "DashboardChartInput":
-        if self.live_query is None:
+        if self.live_query is None:  # defensive; field is required
             raise ValueError("chart live_query is required")
-        live_driven = self.live_query is not None
         if self.family == "bar":
-            if (not self.labels or not self.values) and not live_driven:
-                raise ValueError("bar chart requires labels and values")
             if (
                 self.labels is not None
                 and self.values is not None
                 and len(self.labels) != len(self.values)
             ):
                 raise ValueError("bar chart labels and values length must match")
-        elif self.family in {"line", "scatter", "waveline"}:
-            if not self.xy and not live_driven:
-                raise ValueError(f"{self.family} chart requires xy dataset")
-        elif self.family == "timeseries":
-            if not self.time and not live_driven:
-                raise ValueError("timeseries chart requires time dataset")
-        elif self.family == "ohlc":
-            if not self.candles and not live_driven:
-                raise ValueError("ohlc chart requires candles dataset")
         elif self.family == "heatmap":
-            if self.heatmap is None and not live_driven:
-                raise ValueError("heatmap chart requires heatmap dataset")
             if (
                 self.heatmap_min is not None
                 and self.heatmap_max is not None
                 and self.heatmap_min > self.heatmap_max
             ):
                 raise ValueError("heatmap_min must be <= heatmap_max")
-        elif self.family in {"streamline", "sparkline"}:
-            if not self.value and not live_driven:
-                raise ValueError(f"{self.family} chart requires value dataset")
         return self
 
 
@@ -368,10 +352,7 @@ class DashboardTableInput(BaseModel):
     @field_validator("title")
     @classmethod
     def _normalize_title(cls, value: str) -> str:
-        normalized = " ".join(value.split()).strip()
-        if not normalized:
-            raise ValueError("table title must not be empty")
-        return normalized
+        return _normalize_non_empty_text(value, "table title")
 
     @field_validator("rows")
     @classmethod
@@ -417,10 +398,7 @@ class DashboardBuildInput(BaseModel):
     @field_validator("title")
     @classmethod
     def _normalize_title(cls, value: str) -> str:
-        normalized = " ".join(value.split()).strip()
-        if not normalized:
-            raise ValueError("dashboard title must not be empty")
-        return normalized
+        return _normalize_non_empty_text(value, "dashboard title")
 
     @model_validator(mode="after")
     def _validate_has_widgets(self) -> "DashboardBuildInput":
@@ -628,12 +606,16 @@ def _live_query_to_spec(live_query: DashboardLiveQueryInput) -> dict[str, Any]:
 
 
 def _series_refs_from_xy(series: list[DashboardXYSeriesInput]) -> list[DashboardSeriesRefInput]:
+    if len(series) == 0:
+        return [DashboardSeriesRefInput(name="total", variant="primary")]
     return [DashboardSeriesRefInput(name=s.name, variant="primary") for s in series]
 
 
 def _series_refs_from_time(
     series: list[DashboardTimeSeriesInput],
 ) -> list[DashboardSeriesRefInput]:
+    if len(series) == 0:
+        return [DashboardSeriesRefInput(name="total", variant="primary")]
     return [DashboardSeriesRefInput(name=s.name, variant="primary") for s in series]
 
 

@@ -66,6 +66,27 @@ def _sample_timeseries_payload() -> dict:
     }
 
 
+def _sample_line_payload() -> dict:
+    return {
+        "title": "AI Agent SRE Essentials",
+        "charts": [
+            {
+                "title": "Avg Latency ms",
+                "family": "line",
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["AVG(\"event.latencyMs\")"],
+                    "group_by_keys": [],
+                    "lookback_sec": 1800,
+                    "limit": 120,
+                },
+            }
+        ],
+        "tables": [],
+    }
+
+
 @pytest.fixture
 def runtime() -> BrontoRuntime:
     client = Mock(spec=BrontoClient)
@@ -204,3 +225,38 @@ def test_serve_dashboard_hydrates_live_timeseries_seed_data(monkeypatch, runtime
     assert '"series": [' in spec
     assert '"name": "total"' in spec
     assert '"points": [' in spec
+
+
+def test_serve_dashboard_hydrates_live_line_seed_data(monkeypatch, runtime, tmp_path):
+    monkeypatch.setattr(
+        "bronto.agents.dashboard.tools.handlers.shutil.which",
+        lambda _: "/usr/local/bin/bronto",
+    )
+    runtime.bronto_client.search_post.return_value = {
+        "totals": {
+            "count": 42,
+            "timeseries": [
+                {
+                    "@timestamp": 1771802470000,
+                    "count": 42,
+                    "quantiles": {},
+                    "value": 123.4,
+                }
+            ],
+        }
+    }
+
+    spec_path = tmp_path / "line-dashboard.json"
+    result = runtime.serve_dashboard(
+        _sample_line_payload(),
+        spec_file_path=str(spec_path),
+        launch_mode="none",
+    )
+
+    assert result["status"] == "prepared"
+    spec = spec_path.read_text(encoding="utf-8")
+    assert '"family": "line"' in spec
+    assert '"line": {' in spec
+    assert '"series": [' in spec
+    assert '"name": "total"' in spec
+    assert '"xy": [' in spec
