@@ -322,3 +322,28 @@ def test_dashboard_build_input_rejects_legacy_bar_charts():
                 ],
             }
         )
+
+
+def test_dashboard_build_input_allows_live_only_timeseries_without_seed_points():
+    payload = {
+        "title": "Live Only Time Chart",
+        "charts": [
+            {
+                "title": "Req Rate",
+                "family": "timeseries",
+                "time": [],
+                "live_query": {
+                    "mode": "metrics",
+                    "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+                    "metric_functions": ["COUNT(*)"],
+                    "group_by_keys": ["@time"],
+                    "lookback_sec": 1800,
+                },
+            }
+        ],
+    }
+
+    spec = build_bronto_app_spec(DashboardBuildInput.model_validate(payload))
+    dataset = spec["datasets"]["chart_dataset_1"]
+    assert dataset["kind"] == "timeSeries"
+    assert dataset["liveQuery"]["mode"] == "metrics"

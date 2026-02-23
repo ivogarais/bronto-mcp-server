@@ -307,22 +307,27 @@ class DashboardChartInput(BaseModel):
     def _validate_for_family(self) -> "DashboardChartInput":
         if self.live_query is None:
             raise ValueError("chart live_query is required")
+        live_driven = self.live_query is not None
         if self.family == "bar":
-            if not self.labels or not self.values:
+            if (not self.labels or not self.values) and not live_driven:
                 raise ValueError("bar chart requires labels and values")
-            if len(self.labels) != len(self.values):
+            if (
+                self.labels is not None
+                and self.values is not None
+                and len(self.labels) != len(self.values)
+            ):
                 raise ValueError("bar chart labels and values length must match")
         elif self.family in {"line", "scatter", "waveline"}:
-            if not self.xy:
+            if not self.xy and not live_driven:
                 raise ValueError(f"{self.family} chart requires xy dataset")
         elif self.family == "timeseries":
-            if not self.time:
+            if not self.time and not live_driven:
                 raise ValueError("timeseries chart requires time dataset")
         elif self.family == "ohlc":
-            if not self.candles:
+            if not self.candles and not live_driven:
                 raise ValueError("ohlc chart requires candles dataset")
         elif self.family == "heatmap":
-            if self.heatmap is None:
+            if self.heatmap is None and not live_driven:
                 raise ValueError("heatmap chart requires heatmap dataset")
             if (
                 self.heatmap_min is not None
@@ -331,7 +336,7 @@ class DashboardChartInput(BaseModel):
             ):
                 raise ValueError("heatmap_min must be <= heatmap_max")
         elif self.family in {"streamline", "sparkline"}:
-            if not self.value:
+            if not self.value and not live_driven:
                 raise ValueError(f"{self.family} chart requires value dataset")
         return self
 
