@@ -8,6 +8,17 @@ Serve behavior:
 - Run the returned `command_str` in a real terminal to open the interactive TUI.
 - Use `launch_mode: "blocking"` only when you explicitly want MCP to wait on `bronto serve`.
 - `bronto-cli` live auto-refresh is enabled by default at a tuned interval.
+- `serve_dashboard` seeds charts/tables with real data from Bronto before writing
+  the spec, then `bronto-cli` keeps polling live.
+
+Recommended workflow (for agents):
+1. Discover dataset IDs with `get_datasets`.
+2. Validate available keys with `get_keys(log_id)` before writing filters/groupings.
+3. Build each widget with a required `live_query` using real `log_ids`.
+4. Prefer `serve_dashboard` over `build_dashboard_spec` for runnable specs
+   (it hydrates seed data from Bronto and avoids empty datasets).
+5. Return the exact `command_str` to the user and explain that it must be run in
+   a real terminal.
 
 Required top-level shape:
 
@@ -52,6 +63,8 @@ Required live polling:
   - `limit` (default `100`)
 - `bronto-cli` requires `BRONTO_API_KEY` (and optional `BRONTO_API_ENDPOINT`) for
   live query execution.
+- For `timeseries`, `line`, and `waveline` live charts, avoid grouping by `@time`;
+  Bronto already returns sliced timeseries in totals.
 
 Table item shape:
 
@@ -75,7 +88,7 @@ Column rules:
 - Optional `key`: snake_case, max 24 chars.
 - Optional `width`: `"auto"`, `"flex"`, or integer `1..80`.
 
-Quick valid example payload (multi-family):
+Quick valid example payload (multi-family, live):
 
 ```json
 {
@@ -85,34 +98,39 @@ Quick valid example payload (multi-family):
     {
       "title": "Errors by Type",
       "family": "bar",
-      "labels": ["Timeout", "Validation"],
-      "values": [31, 29]
+      "live_query": {
+        "mode": "metrics",
+        "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+        "metric_functions": ["COUNT(*)"],
+        "search_filter": "\"level\"='error'",
+        "group_by_keys": ["event.error.type"],
+        "lookback_sec": 1800,
+        "limit": 20
+      }
     },
     {
       "title": "Latency",
       "family": "line",
-      "xy": [
-        {
-          "name": "p95",
-          "points": [
-            { "x": 1, "y": 220 },
-            { "x": 2, "y": 245 }
-          ]
-        }
-      ]
+      "live_query": {
+        "mode": "metrics",
+        "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+        "metric_functions": ["AVG(\"event.latencyMs\")"],
+        "group_by_keys": [],
+        "lookback_sec": 1800,
+        "limit": 120
+      }
     },
     {
       "title": "Request Rate",
       "family": "timeseries",
-      "time": [
-        {
-          "name": "req_rate",
-          "points": [
-            { "t": "2026-02-22T12:00:00Z", "v": 140 },
-            { "t": "2026-02-22T12:05:00Z", "v": 155 }
-          ]
-        }
-      ]
+      "live_query": {
+        "mode": "metrics",
+        "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+        "metric_functions": ["COUNT(*)"],
+        "group_by_keys": [],
+        "lookback_sec": 1800,
+        "limit": 120
+      }
     }
   ],
   "tables": [
@@ -123,9 +141,14 @@ Quick valid example payload (multi-family):
         { "title": "service", "width": 12 },
         { "title": "message", "width": "flex" }
       ],
-      "rows": [
-        ["2026-02-22T12:00:01Z", "api", "NullPointerException"]
-      ]
+      "rows": [],
+      "live_query": {
+        "mode": "logs",
+        "log_ids": ["fb7f985f-3558-0232-d30e-42142719a400"],
+        "search_filter": "\"level\"='error'",
+        "lookback_sec": 1800,
+        "limit": 100
+      }
     }
   ]
 }
